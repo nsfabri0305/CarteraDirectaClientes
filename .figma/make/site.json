@@ -1,0 +1,10 @@
+{
+  "description": "This application provides a user-friendly interface for managing client portfolios, displaying dashboards, client lists, and detailed client information in a streamlined manner.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}
