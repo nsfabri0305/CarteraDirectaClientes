@@ -144,10 +144,79 @@ function IconSearch() {
 
 // ── Header Superior ──────────────────────────────────────────────────────────
 function Header({ onLogoClick }: { onLogoClick: () => void }) {
-  return <header style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'0 32px',height:'62px',background:C.navy,borderBottom:`1px solid ${C.navyMid}`,position:'sticky',top:0,zIndex:50}}>
-    <div style={{display:'flex',alignItems:'center',gap:'12px'}}><div style={{width:'28px',height:'28px',borderRadius:'6px',background:'rgba(255,255,255,.15)',display:'flex',alignItems:'center',justifyContent:'center'}}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div><span style={{fontFamily:'Outfit,sans-serif',fontWeight:700,fontSize:'16px',letterSpacing:'.03em',color:'#fff'}}>Equipo Cartera Directa</span></div>
-    <button onClick={onLogoClick} style={{background:'none',border:'1px solid rgba(255,255,255,.25)',borderRadius:'6px',cursor:'pointer',padding:'5px 14px',fontFamily:'Outfit,sans-serif',fontWeight:800,fontSize:'18px',letterSpacing:'.18em',color:'#fff'}}>FMV</button>
-  </header>
+  return (
+    <header
+      style={{
+        flex: '0 0 62px',
+        height: '62px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '0 32px',
+        boxSizing: 'border-box',
+        background: C.navy,
+        borderBottom: `1px solid ${C.navyMid}`,
+        position: 'relative',
+        zIndex: 50,
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <div
+          style={{
+            width: '28px',
+            height: '28px',
+            borderRadius: '6px',
+            background: 'rgba(255,255,255,.15)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="#fff"
+            strokeWidth="2.2"
+          >
+            <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+            <polyline points="9 22 9 12 15 12 15 22" />
+          </svg>
+        </div>
+
+        <span
+          style={{
+            fontFamily: 'Outfit,sans-serif',
+            fontWeight: 700,
+            fontSize: '16px',
+            letterSpacing: '.03em',
+            color: '#fff',
+          }}
+        >
+          Equipo Cartera Directa
+        </span>
+      </div>
+
+      <button
+        onClick={onLogoClick}
+        style={{
+          background: 'none',
+          border: '1px solid rgba(255,255,255,.25)',
+          borderRadius: '6px',
+          cursor: 'pointer',
+          padding: '5px 14px',
+          fontFamily: 'Outfit,sans-serif',
+          fontWeight: 800,
+          fontSize: '18px',
+          letterSpacing: '.18em',
+          color: '#fff',
+        }}
+      >
+        FMV
+      </button>
+    </header>
+  )
 }
 
 // ── Vista 1: Dashboards ──────────────────────────────────────────────────────
@@ -159,134 +228,172 @@ function View1({ onVerCartera }: { onVerCartera: () => void }) {
 
   const goTo = (idx: number, d: 1 | -1) => {
     if (transitioning || idx === current) return
+
     setDir(d)
     setTransitioning(true)
-    setTimeout(() => setTransitioning(false), 240)
     setCurrent(idx)
+
+    window.setTimeout(() => {
+      setTransitioning(false)
+    }, 220)
   }
 
-  const next = () => goTo((current + 1) % DASHBOARDS.length, 1)
-  const prev = () => goTo((current - 1 + DASHBOARDS.length) % DASHBOARDS.length, -1)
+  const next = () => {
+    goTo((current + 1) % DASHBOARDS.length, 1)
+  }
+
+  const prev = () => {
+    goTo((current - 1 + DASHBOARDS.length) % DASHBOARDS.length, -1)
+  }
+
   const dashboard = DASHBOARDS[current]
 
   useEffect(() => {
-    timerRef.current = setInterval(next, 8000)
+    timerRef.current = setInterval(() => {
+      setCurrent(prevIndex => (prevIndex + 1) % DASHBOARDS.length)
+    }, 8000)
+
     return () => {
       if (timerRef.current) clearInterval(timerRef.current)
     }
-  }, [current])
+  }, [])
 
   return (
-    <div style={{
-      flex: 1,
-      minHeight: 0,
-      display: 'flex',
-      flexDirection: 'column',
-      padding: '16px 32px 12px',
-      gap: '10px',
-      overflow: 'hidden',
-    }}>
-      {/* Encabezado compacto: no roba espacio al dashboard */}
-      <div style={{
-        flex: '0 0 auto',
+    <div
+      style={{
+        flex: '1 1 auto',
+        minHeight: 0,
+        width: '100%',
+        height: '100%',
+        boxSizing: 'border-box',
         display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        minHeight: '34px',
-      }}>
+        flexDirection: 'column',
+        padding: '10px 32px 8px',
+        overflow: 'hidden',
+      }}
+    >
+      {/* Encabezado */}
+      <div
+        style={{
+          flex: '0 0 38px',
+          height: '38px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          boxSizing: 'border-box',
+        }}
+      >
         <div>
-          <div style={{
-            fontFamily: 'JetBrains Mono, monospace',
-            fontSize: '9px',
-            letterSpacing: '.14em',
-            textTransform: 'uppercase',
-            color: C.celeste,
-            marginBottom: '2px',
-          }}>
+          <div
+            style={{
+              fontFamily: 'JetBrains Mono, monospace',
+              fontSize: '8px',
+              fontWeight: 600,
+              letterSpacing: '.16em',
+              textTransform: 'uppercase',
+              color: C.celeste,
+              lineHeight: 1,
+              marginBottom: '3px',
+            }}
+          >
             Reportes ejecutivos
           </div>
-          <h1 style={{
-            margin: 0,
-            fontFamily: 'Outfit, sans-serif',
-            fontWeight: 700,
-            fontSize: '22px',
-            lineHeight: 1.1,
-            color: C.navy,
-          }}>
+
+          <h1
+            style={{
+              margin: 0,
+              fontFamily: 'Outfit, sans-serif',
+              fontWeight: 700,
+              fontSize: '20px',
+              lineHeight: 1,
+              color: C.navy,
+            }}
+          >
             Dashboards
           </h1>
         </div>
 
-        <div style={{
-          fontFamily: 'Inter, sans-serif',
-          fontSize: '10px',
-          color: C.textSoft,
-          background: C.white,
-          border: `1px solid ${C.border}`,
-          borderRadius: '20px',
-          padding: '5px 10px',
-        }}>
+        <div
+          style={{
+            fontFamily: 'Inter, sans-serif',
+            fontSize: '10px',
+            fontWeight: 600,
+            color: C.textSoft,
+            whiteSpace: 'nowrap',
+          }}
+        >
           {current + 1} de {DASHBOARDS.length}
         </div>
       </div>
 
-      {/* Marco principal: ocupa TODO el espacio disponible y nunca genera scroll */}
-      <section style={{
-        position: 'relative',
-        flex: '1 1 auto',
-        minHeight: 0,
-        width: '100%',
-        borderRadius: '14px',
-        border: `1px solid ${C.border}`,
-        background: 'linear-gradient(135deg,#f9fbfe 0%,#eef4fa 100%)',
-        boxShadow: '0 3px 18px rgba(13,43,94,.07)',
-        overflow: 'hidden',
-      }}>
-        {/* Patrón muy sutil del fondo */}
-        <div style={{
-          position: 'absolute',
-          inset: 0,
-          pointerEvents: 'none',
-          opacity: .22,
-          backgroundImage: `radial-gradient(circle,${C.border} 1px,transparent 1px)`,
-          backgroundSize: '24px 24px',
-        }} />
-
-        <div style={{
+      {/* Área del dashboard. Todo lo que está aquí cabe en pantalla. */}
+      <div
+        style={{
           position: 'relative',
-          zIndex: 1,
-          width: '100%',
-          height: '100%',
+          flex: '1 1 auto',
           minHeight: 0,
+          width: '100%',
           display: 'flex',
-          flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          padding: '14px 64px 10px',
-        }}>
-          {/*
-            El marco usa EXACTAMENTE la proporción del dashboard:
-            1420 × 791 = 1.7952.
-            La altura se adapta al espacio disponible y la anchura se calcula
-            automáticamente por aspect-ratio. No hay letterbox ni barras.
-          */}
-          <div style={{
+          overflow: 'hidden',
+          boxSizing: 'border-box',
+        }}
+      >
+        {/* Flecha izquierda */}
+        <button
+          onClick={prev}
+          aria-label="Dashboard anterior"
+          style={{
+            ...navBtn,
+            left: '2px',
+          }}
+        >
+          ‹
+        </button>
+
+        {/* 
+          ESTE ES EL PUNTO CLAVE DEL DISEÑO.
+
+          El ancho se calcula simultáneamente por:
+          1. ancho disponible
+          2. alto disponible
+
+          La imagen mantiene SIEMPRE 1420 / 791.
+          Se reserva solo el espacio mínimo para el nombre y los indicadores.
+        */}
+        <div
+          style={{
             position: 'relative',
-            height: 'calc(100% - 44px)',
+            width: 'min(calc(100% - 96px), calc((100% - 46px) * 1420 / 791))',
+            maxWidth: '1420px',
             maxHeight: '100%',
-            width: 'auto',
-            aspectRatio: '1420 / 791',
-            maxWidth: '100%',
-            flex: '0 1 auto',
-            background: C.white,
-            border: `1px solid ${C.border}`,
-            borderRadius: '9px',
-            overflow: 'hidden',
-            boxShadow: '0 7px 24px rgba(13,43,94,.11)',
-            opacity: transitioning ? 0 : 1,
-            transform: transitioning ? `translateX(${dir * 22}px)` : 'translateX(0)',
-            transition: 'opacity .24s ease, transform .24s ease',
-          }}>
+            flex: '0 0 auto',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'stretch',
+            boxSizing: 'border-box',
+          }}
+        >
+          {/* Marco de la imagen: EXACTAMENTE 1420 × 791 */}
+          <div
+            style={{
+              position: 'relative',
+              width: '100%',
+              aspectRatio: '1420 / 791',
+              background: C.white,
+              border: `1px solid ${C.border}`,
+              borderRadius: '10px',
+              overflow: 'hidden',
+              boxSizing: 'border-box',
+              boxShadow: '0 8px 24px rgba(13,43,94,.10)',
+              opacity: transitioning ? 0 : 1,
+              transform: transitioning
+                ? `translateX(${dir * 16}px)`
+                : 'translateX(0)',
+              transition: 'opacity .22s ease, transform .22s ease',
+            }}
+          >
             <img
               src={dashboard.preview}
               alt={`Vista previa de ${dashboard.title}`}
@@ -295,55 +402,74 @@ function View1({ onVerCartera }: { onVerCartera: () => void }) {
                 height: '100%',
                 display: 'block',
                 objectFit: 'fill',
-                background: '#fff',
               }}
               onError={e => {
                 e.currentTarget.style.display = 'none'
-                const fallback = e.currentTarget.nextElementSibling as HTMLElement | null
+
+                const fallback =
+                  e.currentTarget.nextElementSibling as HTMLElement | null
+
                 if (fallback) fallback.style.display = 'flex'
               }}
             />
-            <div style={{
-              display: 'none',
-              position: 'absolute',
-              inset: 0,
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexDirection: 'column',
-              gap: '8px',
-              color: C.textSoft,
-              background: C.white,
-              fontFamily: 'Inter, sans-serif',
-              fontSize: '12px',
-            }}>
-              <IconPowerBI size={34} />
-              <span>Agrega la imagen en <strong>public/powerbi</strong></span>
+
+            {/* Fallback si la imagen no existe */}
+            <div
+              style={{
+                display: 'none',
+                position: 'absolute',
+                inset: 0,
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexDirection: 'column',
+                gap: '8px',
+                color: C.textSoft,
+                background: C.white,
+                fontFamily: 'Inter, sans-serif',
+                fontSize: '12px',
+              }}
+            >
+              <IconPowerBI size={30} />
+              <span>
+                No se encontró la vista previa en{' '}
+                <strong>public/powerbi</strong>
+              </span>
             </div>
           </div>
 
-          {/* Archivo: deliberadamente mínimo. Solo nombre + tres puntos */}
-          <div style={{
-            width: 'min(100%, 1420px)',
-            minHeight: '34px',
-            flex: '0 0 34px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: '12px',
-            padding: '0 4px 0 2px',
-            marginTop: '7px',
-            opacity: transitioning ? 0 : 1,
-            transition: 'opacity .24s ease',
-          }}>
+          {/* 
+            Fila del archivo.
+            SIN tarjeta gruesa.
+            SIN icono.
+            SIN "ARCHIVO POWER BI".
+            Solo nombre formal + tres puntos.
+          */}
+          <div
+            style={{
+              width: '100%',
+              height: '34px',
+              flex: '0 0 34px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '16px',
+              boxSizing: 'border-box',
+              padding: '0 2px',
+              marginTop: '5px',
+              opacity: transitioning ? 0 : 1,
+              transition: 'opacity .22s ease',
+            }}
+          >
             <div
               title={dashboard.fileName}
               style={{
                 minWidth: 0,
+                flex: '1 1 auto',
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
                 whiteSpace: 'nowrap',
                 fontFamily: 'Inter, sans-serif',
-                fontSize: '12px',
+                fontSize: '11px',
                 fontWeight: 600,
                 color: C.navy,
                 lineHeight: 1.2,
@@ -352,81 +478,90 @@ function View1({ onVerCartera }: { onVerCartera: () => void }) {
               {dashboard.fileName}
             </div>
 
-            {/* Los tres puntos son directamente el botón de descarga */}
             <a
               href={dashboard.file}
               download={dashboard.fileName}
               aria-label={`Descargar ${dashboard.fileName}`}
-              title="Descargar archivo PBIX"
+              title="Descargar PBIX"
               style={{
-                flex: '0 0 30px',
-                width: '30px',
-                height: '30px',
+                flex: '0 0 28px',
+                width: '28px',
+                height: '28px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                borderRadius: '6px',
                 color: C.navyMid,
                 textDecoration: 'none',
+                borderRadius: '5px',
                 cursor: 'pointer',
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.background = C.blue3
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.background = 'transparent'
               }}
             >
               <IconMore color={C.navyMid} />
             </a>
           </div>
+
+          {/* Indicadores debajo del archivo */}
+          <div
+            style={{
+              height: '8px',
+              flex: '0 0 8px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '5px',
+            }}
+          >
+            {DASHBOARDS.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => goTo(i, i > current ? 1 : -1)}
+                aria-label={`Ir al dashboard ${i + 1}`}
+                style={{
+                  width: i === current ? '18px' : '5px',
+                  height: '5px',
+                  padding: 0,
+                  border: 'none',
+                  borderRadius: '5px',
+                  background: i === current ? C.navy : C.border,
+                  cursor: 'pointer',
+                  transition: 'all .22s ease',
+                }}
+              />
+            ))}
+          </div>
         </div>
 
-        {/* Navegación lateral */}
-        <button onClick={prev} aria-label="Dashboard anterior" style={{
-          ...navBtn,
-          left: '14px',
-        }}>
-          ‹
-        </button>
-        <button onClick={next} aria-label="Dashboard siguiente" style={{
-          ...navBtn,
-          right: '14px',
-          left: 'auto',
-        }}>
+        {/* Flecha derecha */}
+        <button
+          onClick={next}
+          aria-label="Dashboard siguiente"
+          style={{
+            ...navBtn,
+            right: '2px',
+            left: 'auto',
+          }}
+        >
           ›
         </button>
+      </div>
 
-        {/* Indicadores */}
-        <div style={{
-          position: 'absolute',
-          bottom: '6px',
-          left: '50%',
-          transform: 'translateX(-50%)',
+      {/* Botón inferior. No ocupa espacio del dashboard. */}
+      <div
+        style={{
+          flex: '0 0 34px',
+          height: '34px',
           display: 'flex',
-          gap: '6px',
-          alignItems: 'center',
-        }}>
-          {DASHBOARDS.map((_, i) => (
-            <button
-              key={i}
-              onClick={() => goTo(i, i > current ? 1 : -1)}
-              aria-label={`Ir al dashboard ${i + 1}`}
-              style={{
-                width: i === current ? '20px' : '6px',
-                height: '6px',
-                borderRadius: '4px',
-                padding: 0,
-                background: i === current ? C.navy : C.border,
-                border: 'none',
-                cursor: 'pointer',
-                transition: 'all .24s ease',
-              }}
-            />
-          ))}
-        </div>
-      </section>
-
-      {/* Botón de cartera: se mantiene fuera del marco y compacto */}
-      <div style={{
-        flex: '0 0 auto',
-        display: 'flex',
-        justifyContent: 'flex-end',
-      }}>
+          alignItems: 'flex-end',
+          justifyContent: 'flex-end',
+          boxSizing: 'border-box',
+        }}
+      >
         <button
           onClick={onVerCartera}
           style={{
@@ -436,10 +571,11 @@ function View1({ onVerCartera }: { onVerCartera: () => void }) {
             color: '#fff',
             fontFamily: 'Outfit, sans-serif',
             fontWeight: 600,
-            fontSize: '13px',
-            padding: '9px 22px',
+            fontSize: '12px',
+            padding: '8px 18px',
             cursor: 'pointer',
-            letterSpacing: '.03em',
+            letterSpacing: '.02em',
+            whiteSpace: 'nowrap',
           }}
         >
           Ver Cartera Clientes →
@@ -447,26 +583,6 @@ function View1({ onVerCartera }: { onVerCartera: () => void }) {
       </div>
     </div>
   )
-}
-
-const navBtn: React.CSSProperties = {
-  position: 'absolute',
-  top: '50%',
-  transform: 'translateY(-50%)',
-  width: '34px',
-  height: '34px',
-  borderRadius: '50%',
-  background: C.white,
-  border: `1px solid ${C.border}`,
-  color: C.navyMid,
-  fontSize: '20px',
-  cursor: 'pointer',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  boxShadow: '0 1px 6px rgba(13,43,94,0.10)',
-  lineHeight: '1',
-  zIndex: 2,
 }
 
 // ── Vista 2: Lista de Clientes con Filtros, Saldo y Ordenamiento ────────────
@@ -1230,6 +1346,35 @@ export default function App() {
   const [clients, setClients] = useState<any[]>([])
   const [loading, setLoading] = useState<boolean>(true)
 
+  // La vista de dashboards funciona como una pantalla completa:
+  // no permite que el documento cree scroll vertical u horizontal.
+  useEffect(() => {
+    const html = document.documentElement
+    const body = document.body
+
+    const previous = {
+      htmlHeight: html.style.height,
+      htmlOverflow: html.style.overflow,
+      bodyHeight: body.style.height,
+      bodyMargin: body.style.margin,
+      bodyOverflow: body.style.overflow,
+    }
+
+    html.style.height = '100%'
+    html.style.overflow = 'hidden'
+    body.style.height = '100%'
+    body.style.margin = '0'
+    body.style.overflow = 'hidden'
+
+    return () => {
+      html.style.height = previous.htmlHeight
+      html.style.overflow = previous.htmlOverflow
+      body.style.height = previous.bodyHeight
+      body.style.margin = previous.bodyMargin
+      body.style.overflow = previous.bodyOverflow
+    }
+  }, [])
+
   useEffect(() => {
     async function fetchAllClients() {
       try {
@@ -1274,9 +1419,27 @@ export default function App() {
   }, [])
 
   return (
-    <div style={{ minHeight: '100vh', background: C.bg, display: 'flex', flexDirection: 'column' }}>
+    <div
+      style={{
+        width: '100%',
+        height: '100dvh',
+        minHeight: 0,
+        background: C.bg,
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden',
+      }}
+    >
       <Header onLogoClick={() => { setView('dashboard'); setSelected(null) }} />
-      <main style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+      <main
+        style={{
+          flex: '1 1 auto',
+          minHeight: 0,
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+        }}
+      >
         {view === 'dashboard' && <View1 onVerCartera={() => setView('cartera')} />}
         {view === 'cartera' && (
           <View2
