@@ -105,193 +105,108 @@ function parseSaldo(val: any): { num: number; formatted: string } {
   return { num, formatted }
 }
 
-const SLIDES = ['Dashboard 1', 'Dashboard 2', 'Dashboard 3', 'Dashboard 4']
+// ── Dashboards Power BI ──────────────────────────────────────────────────────
+const DASHBOARDS = [
+  {
+    title: 'Monitoreo de créditos por cartera (Vencidos y no vencidos) - IFIA',
+    fileName: 'monitoreo-creditos-ifia.pbix',
+    preview: '/powerbi/monitoreo-creditos-ifia.png',
+    file: '/powerbi/monitoreo-creditos-ifia.pbix',
+  },
+  {
+    title: 'Seguimiento de solicitudes de quejas y/o reclamos, requerimientos varios de los clientes de la Cartera Directa',
+    fileName: 'seguimiento-solicitudes-cartera-directa.pbix',
+    preview: '/powerbi/seguimiento-solicitudes-cartera-directa.png',
+    file: '/powerbi/seguimiento-solicitudes-cartera-directa.pbix',
+  },
+]
 
-// ── Iconos ───────────────────────────────────────────────────────────────────
+function IconPowerBI({ size = 22 }: { size?: number }) {
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none"><rect x="4" y="8" width="4" height="11" rx="1" fill="#f2c811"/><rect x="10" y="5" width="4" height="14" rx="1" fill="#f2c811" opacity=".88"/><rect x="16" y="2" width="4" height="17" rx="1" fill="#f2c811" opacity=".72"/></svg>
+}
+function IconMore({ color = C.textSoft }: { color?: string }) {
+  return <svg width="18" height="18" viewBox="0 0 24 24" fill={color}><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg>
+}
+function IconDownload({ size = 16, color = C.navy }: { size?: number; color?: string }) {
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>
+}
+
+// ── Iconos existentes ────────────────────────────────────────────────────────
 function IconMail({ size = 15, color = C.celeste }: { size?: number; color?: string }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
-      stroke={color} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
-      <rect x="2" y="4" width="20" height="16" rx="2" />
-      <path d="M2 7l10 7 10-7" />
-    </svg>
-  )
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 7l10 7 10-7"/></svg>
 }
-
 function IconChevron({ open, color = C.textSoft }: { open: boolean; color?: string }) {
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-      stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"
-      style={{ transition: 'transform 0.22s', transform: open ? 'rotate(180deg)' : 'rotate(0)' }}>
-      <path d="M6 9l6 6 6-6" />
-    </svg>
-  )
+  return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{transition:'transform .22s',transform:open?'rotate(180deg)':'rotate(0)'}}><path d="M6 9l6 6 6-6"/></svg>
 }
-
 function IconSearch() {
-  return (
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
-      stroke={C.textSoft} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" />
-    </svg>
-  )
+  return <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={C.textSoft} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
 }
 
 // ── Header Superior ──────────────────────────────────────────────────────────
 function Header({ onLogoClick }: { onLogoClick: () => void }) {
-  return (
-    <header style={{
-      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-      padding: '0 32px', height: '62px',
-      background: C.navy,
-      borderBottom: `1px solid ${C.navyMid}`,
-      position: 'sticky', top: 0, zIndex: 50,
-    }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-        <div style={{
-          width: '28px', height: '28px', borderRadius: '6px',
-          background: 'rgba(255,255,255,0.15)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-        }}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth={2.2}>
-            <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
-            <polyline points="9 22 9 12 15 12 15 22" />
-          </svg>
-        </div>
-        <span style={{
-          fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: '16px',
-          letterSpacing: '0.03em', color: '#ffffff',
-        }}>
-          Equipo Cartera Directa
-        </span>
-      </div>
-      <button onClick={onLogoClick} style={{
-        background: 'none', border: '1px solid rgba(255,255,255,0.25)', borderRadius: '6px',
-        cursor: 'pointer', padding: '5px 14px',
-        fontFamily: 'Outfit, sans-serif', fontWeight: 800, fontSize: '18px',
-        letterSpacing: '0.18em', color: '#ffffff',
-      }}>
-        FMV
-      </button>
-    </header>
-  )
+  return <header style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'0 32px',height:'62px',background:C.navy,borderBottom:`1px solid ${C.navyMid}`,position:'sticky',top:0,zIndex:50}}>
+    <div style={{display:'flex',alignItems:'center',gap:'12px'}}><div style={{width:'28px',height:'28px',borderRadius:'6px',background:'rgba(255,255,255,.15)',display:'flex',alignItems:'center',justifyContent:'center'}}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div><span style={{fontFamily:'Outfit,sans-serif',fontWeight:700,fontSize:'16px',letterSpacing:'.03em',color:'#fff'}}>Equipo Cartera Directa</span></div>
+    <button onClick={onLogoClick} style={{background:'none',border:'1px solid rgba(255,255,255,.25)',borderRadius:'6px',cursor:'pointer',padding:'5px 14px',fontFamily:'Outfit,sans-serif',fontWeight:800,fontSize:'18px',letterSpacing:'.18em',color:'#fff'}}>FMV</button>
+  </header>
 }
 
-// ── Vista 1: Dashboards Carousel ─────────────────────────────────────────────
+// ── Vista 1: Dashboards ──────────────────────────────────────────────────────
 function View1({ onVerCartera }: { onVerCartera: () => void }) {
-  const [current, setCurrent] = useState(0)
-  const [transitioning, setTransitioning] = useState(false)
-  const [dir, setDir] = useState<1 | -1>(1)
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const [current,setCurrent]=useState(0)
+  const [transitioning,setTransitioning]=useState(false)
+  const [dir,setDir]=useState<1|-1>(1)
+  const [menuOpen,setMenuOpen]=useState(false)
+  const timerRef=useRef<ReturnType<typeof setInterval>|null>(null)
 
-  const goTo = (idx: number, d: 1 | -1) => {
-    if (transitioning) return
-    setDir(d); setTransitioning(true)
-    setTimeout(() => { setCurrent(idx); setTransitioning(false) }, 340)
+  const goTo=(idx:number,d:1|-1)=>{
+    if(transitioning||idx===current)return
+    setDir(d);setTransitioning(true);setMenuOpen(false)
+    setTimeout(()=>{setCurrent(idx);setTransitioning(false)},260)
   }
-  const next = () => goTo((current + 1) % SLIDES.length, 1)
-  const prev = () => goTo((current - 1 + SLIDES.length) % SLIDES.length, -1)
+  const next=()=>goTo((current+1)%DASHBOARDS.length,1)
+  const prev=()=>goTo((current-1+DASHBOARDS.length)%DASHBOARDS.length,-1)
+  const dashboard=DASHBOARDS[current]
 
-  useEffect(() => {
-    timerRef.current = setInterval(next, 6000)
-    return () => { if (timerRef.current) clearInterval(timerRef.current) }
-  }, [current])
+  useEffect(()=>{timerRef.current=setInterval(next,8000);return()=>{if(timerRef.current)clearInterval(timerRef.current)}},[current])
+  useEffect(()=>{const close=()=>setMenuOpen(false);window.addEventListener('click',close);return()=>window.removeEventListener('click',close)},[])
 
-  const slideAccent = [C.celeste, C.navyMid, C.celesteL, C.navyLight]
-  const acc = slideAccent[current]
-
-  return (
-    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '28px 32px', gap: '20px', overflow: 'hidden' }}>
-      <div style={{
-        flex: 1, position: 'relative', borderRadius: '12px', overflow: 'hidden',
-        border: `1px solid ${C.border}`,
-        background: C.white,
-        minHeight: '400px',
-        boxShadow: '0 2px 12px rgba(13,43,94,0.07)',
-      }}>
-        <div style={{
-          position: 'absolute', inset: 0,
-          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-          background: C.white,
-          opacity: transitioning ? 0 : 1,
-          transform: transitioning ? `translateX(${dir * 36}px)` : 'translateX(0)',
-          transition: 'opacity 0.34s ease, transform 0.34s cubic-bezier(0.4,0,0.2,1)',
-        }}>
-          <div style={{
-            position: 'absolute', inset: 0, opacity: 0.35,
-            backgroundImage: `radial-gradient(circle, ${C.border} 1px, transparent 1px)`,
-            backgroundSize: '24px 24px',
-          }} />
-
-          <div style={{ position: 'relative', width: '100%', maxWidth: '680px', padding: '36px', display: 'flex', flexDirection: 'column', gap: '18px' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '12px' }}>
-              {['Cartera Activa', 'Al Día', 'En Gestión', 'Cerrados'].map((lbl, i) => (
-                <div key={lbl} style={{
-                  background: i === 0 ? C.navy : C.white,
-                  border: `1px solid ${i === 0 ? C.navy : C.border}`,
-                  borderRadius: '8px', padding: '16px 14px',
-                }}>
-                  <div style={{ height: '7px', width: '55%', background: i === 0 ? 'rgba(255,255,255,0.25)' : C.surface, borderRadius: '3px', marginBottom: '10px' }} />
-                  <div style={{ height: '22px', width: '65%', background: i === 0 ? 'rgba(255,255,255,0.2)' : `${acc}22`, borderRadius: '4px' }} />
-                </div>
-              ))}
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '12px' }}>
-              <div style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: '8px', padding: '16px', height: '130px' }}>
-                <div style={{ height: '7px', width: '38%', background: C.surface, borderRadius: '3px', marginBottom: '16px' }} />
-                <div style={{ display: 'flex', alignItems: 'flex-end', gap: '7px', height: '76px' }}>
-                  {[50, 68, 44, 90, 62, 75, 55].map((h, i) => (
-                    <div key={i} style={{ flex: 1, height: `${h}%`, background: i === 3 ? acc : `${acc}55`, borderRadius: '3px 3px 0 0' }} />
-                  ))}
-                </div>
-              </div>
-              <div style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: '8px', padding: '16px', height: '130px', display: 'flex', flexDirection: 'column', gap: '10px', justifyContent: 'center' }}>
-                {[70, 45, 85].map((w, i) => (
-                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <div style={{ height: '6px', background: C.surface, borderRadius: '3px', width: '40px', flexShrink: 0 }} />
-                    <div style={{ height: '6px', background: i === 0 ? acc : `${acc}66`, borderRadius: '3px', flex: 1, maxWidth: `${w}%` }} />
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          <div style={{
-            position: 'absolute', top: '16px', left: '20px',
-            fontFamily: 'JetBrains Mono, monospace', fontSize: '10px',
-            letterSpacing: '0.1em', color: acc, textTransform: 'uppercase',
-            background: C.bg, padding: '4px 10px', borderRadius: '4px',
-            border: `1px solid ${C.border}`,
-          }}>
-            {SLIDES[current]}
-          </div>
-        </div>
-
-        <button onClick={prev} style={navBtn}>‹</button>
-        <button onClick={next} style={{ ...navBtn, right: '16px', left: 'auto' }}>›</button>
-
-        <div style={{ position: 'absolute', bottom: '16px', left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: '7px' }}>
-          {SLIDES.map((_, i) => (
-            <button key={i} onClick={() => goTo(i, i > current ? 1 : -1)} style={{
-              width: i === current ? '22px' : '7px', height: '7px', borderRadius: '4px', padding: 0,
-              background: i === current ? C.navy : C.border, border: 'none', cursor: 'pointer',
-              transition: 'all 0.28s ease',
-            }} />
-          ))}
-        </div>
-      </div>
-
-      <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-        <button onClick={onVerCartera} style={{
-          background: C.blue1, border: 'none', borderRadius: '7px',
-          color: '#fff', fontFamily: 'Outfit, sans-serif', fontWeight: 600,
-          fontSize: '14px', padding: '11px 26px', cursor: 'pointer', letterSpacing: '0.03em',
-        }}>
-          Ver Cartera Clientes →
-        </button>
-      </div>
+  return <div style={{flex:1,display:'flex',flexDirection:'column',padding:'28px 32px 22px',gap:'18px',overflowY:'auto'}}>
+    <div style={{display:'flex',alignItems:'flex-end',justifyContent:'space-between',gap:'20px'}}>
+      <div><div style={{fontFamily:'JetBrains Mono,monospace',fontSize:'10px',letterSpacing:'.14em',textTransform:'uppercase',color:C.celeste,marginBottom:'5px'}}>Reportes ejecutivos</div><h1 style={{margin:0,fontFamily:'Outfit,sans-serif',fontWeight:700,fontSize:'23px',color:C.navy}}>Dashboards</h1></div>
+      <div style={{fontFamily:'Inter,sans-serif',fontSize:'11px',color:C.textSoft,background:C.white,border:`1px solid ${C.border}`,borderRadius:'20px',padding:'6px 11px'}}>{current+1} de {DASHBOARDS.length}</div>
     </div>
-  )
+
+    <div style={{position:'relative',width:'100%',flex:'0 0 auto',minHeight:'560px',borderRadius:'14px',border:`1px solid ${C.border}`,background:'linear-gradient(135deg,#f8fbff 0%,#eef4fa 100%)',boxShadow:'0 3px 18px rgba(13,43,94,.08)',display:'flex',alignItems:'center',justifyContent:'center',padding:'30px 72px 26px',overflow:'hidden'}}>
+      <div style={{position:'absolute',inset:0,pointerEvents:'none',opacity:.35,backgroundImage:`radial-gradient(circle,${C.border} 1px,transparent 1px)`,backgroundSize:'24px 24px'}}/>
+
+      <div style={{position:'relative',width:'min(100%,1050px)',display:'flex',flexDirection:'column',alignItems:'center',gap:'14px',opacity:transitioning?0:1,transform:transitioning?`translateX(${dir*28}px)`:'translateX(0)',transition:'opacity .26s ease,transform .26s ease'}}>
+        <div style={{width:'min(100%,960px)',aspectRatio:'16 / 9',background:C.white,border:`1px solid ${C.border}`,borderRadius:'10px',overflow:'hidden',boxShadow:'0 8px 28px rgba(13,43,94,.12)',display:'flex',alignItems:'center',justifyContent:'center'}}>
+          <img src={dashboard.preview} alt={`Vista previa de ${dashboard.title}`} style={{width:'100%',height:'100%',objectFit:'contain',display:'block',background:'#fff'}} onError={e=>{e.currentTarget.style.display='none';const f=e.currentTarget.nextElementSibling as HTMLElement|null;if(f)f.style.display='flex'}}/>
+          <div style={{display:'none',width:'100%',height:'100%',alignItems:'center',justifyContent:'center',flexDirection:'column',gap:'10px',color:C.textSoft,background:C.white}}><IconPowerBI size={34}/><span style={{fontFamily:'Inter,sans-serif',fontSize:'12px'}}>Agrega la imagen en <strong>public/powerbi</strong></span></div>
+        </div>
+
+        <div style={{position:'relative',width:'min(100%,960px)'}}>
+          <div style={{display:'flex',alignItems:'center',gap:'12px',minHeight:'62px',padding:'10px 12px 10px 14px',background:C.white,border:`1px solid ${C.border}`,borderRadius:'10px',boxShadow:'0 2px 9px rgba(13,43,94,.06)'}}>
+            <div style={{width:'38px',height:'38px',flexShrink:0,borderRadius:'8px',background:'#fff8d8',border:'1px solid #f0df86',display:'flex',alignItems:'center',justifyContent:'center'}}><IconPowerBI size={22}/></div>
+            <div style={{minWidth:0,flex:1}}><div title={dashboard.fileName} style={{fontFamily:'Inter,sans-serif',fontWeight:600,fontSize:'12px',color:C.text,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{dashboard.fileName}</div><div style={{fontFamily:'JetBrains Mono,monospace',fontSize:'9px',color:C.textSoft,marginTop:'3px',letterSpacing:'.05em'}}>ARCHIVO POWER BI · .PBIX</div></div>
+            <div style={{position:'relative',flexShrink:0}}>
+              <button type="button" aria-label="Más opciones" onClick={e=>{e.stopPropagation();setMenuOpen(o=>!o)}} style={{width:'34px',height:'34px',borderRadius:'7px',border:`1px solid ${C.border}`,background:C.white,display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer'}}><IconMore/></button>
+              {menuOpen&&<div onClick={e=>e.stopPropagation()} style={{position:'absolute',right:0,bottom:'42px',zIndex:10,width:'180px',padding:'5px',background:C.white,border:`1px solid ${C.border}`,borderRadius:'9px',boxShadow:'0 10px 28px rgba(13,43,94,.16)'}}>
+                <a href={dashboard.file} download={dashboard.fileName} style={{display:'flex',alignItems:'center',gap:'9px',padding:'9px 10px',borderRadius:'6px',color:C.textMid,textDecoration:'none',fontFamily:'Inter,sans-serif',fontSize:'12px',fontWeight:500}}><IconDownload size={15} color={C.navyMid}/>Descargar PBIX</a>
+              </div>}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <button onClick={prev} aria-label="Dashboard anterior" style={navBtn}>‹</button>
+      <button onClick={next} aria-label="Dashboard siguiente" style={{...navBtn,right:'16px',left:'auto'}}>›</button>
+      <div style={{position:'absolute',bottom:'10px',left:'50%',transform:'translateX(-50%)',display:'flex',gap:'7px',alignItems:'center'}}>
+        {DASHBOARDS.map((_,i)=><button key={i} onClick={()=>goTo(i,i>current?1:-1)} aria-label={`Ir al dashboard ${i+1}`} style={{width:i===current?'22px':'7px',height:'7px',borderRadius:'4px',padding:0,background:i===current?C.navy:C.border,border:'none',cursor:'pointer',transition:'all .28s ease'}}/>)}</div>
+    </div>
+
+    <div style={{display:'flex',justifyContent:'flex-end'}}><button onClick={onVerCartera} style={{background:C.blue1,border:'none',borderRadius:'7px',color:'#fff',fontFamily:'Outfit,sans-serif',fontWeight:600,fontSize:'14px',padding:'11px 26px',cursor:'pointer',letterSpacing:'.03em'}}>Ver Cartera Clientes →</button></div>
+  </div>
 }
 
 const navBtn: React.CSSProperties = {
