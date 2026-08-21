@@ -109,13 +109,13 @@ function parseSaldo(val: any): { num: number; formatted: string } {
 const DASHBOARDS = [
   {
     title: 'Monitoreo de créditos por cartera (Vencidos y no vencidos) - IFIA',
-    fileName: 'monitoreo-creditos-ifia.pbix',
+    fileName: 'Monitoreo de créditos por cartera (Vencidos y no vencidos) - IFIA.pbix',
     preview: '/powerbi/monitoreo-creditos-ifia.png',
     file: '/powerbi/monitoreo-creditos-ifia.pbix',
   },
   {
     title: 'Seguimiento de solicitudes de quejas y/o reclamos, requerimientos varios de los clientes de la Cartera Directa',
-    fileName: 'seguimiento-solicitudes-cartera-directa.pbix',
+    fileName: 'Seguimiento de solicitudes de quejas yo reclamos, requerimientos varios de los clientes de la Cartera Directa.pbix',
     preview: '/powerbi/seguimiento-solicitudes-cartera-directa.png',
     file: '/powerbi/seguimiento-solicitudes-cartera-directa.pbix',
   },
@@ -152,70 +152,321 @@ function Header({ onLogoClick }: { onLogoClick: () => void }) {
 
 // ── Vista 1: Dashboards ──────────────────────────────────────────────────────
 function View1({ onVerCartera }: { onVerCartera: () => void }) {
-  const [current,setCurrent]=useState(0)
-  const [transitioning,setTransitioning]=useState(false)
-  const [dir,setDir]=useState<1|-1>(1)
-  const [menuOpen,setMenuOpen]=useState(false)
-  const timerRef=useRef<ReturnType<typeof setInterval>|null>(null)
+  const [current, setCurrent] = useState(0)
+  const [transitioning, setTransitioning] = useState(false)
+  const [dir, setDir] = useState<1 | -1>(1)
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
-  const goTo=(idx:number,d:1|-1)=>{
-    if(transitioning||idx===current)return
-    setDir(d);setTransitioning(true);setMenuOpen(false)
-    setTimeout(()=>{setCurrent(idx);setTransitioning(false)},260)
+  const goTo = (idx: number, d: 1 | -1) => {
+    if (transitioning || idx === current) return
+    setDir(d)
+    setTransitioning(true)
+    setTimeout(() => setTransitioning(false), 240)
+    setCurrent(idx)
   }
-  const next=()=>goTo((current+1)%DASHBOARDS.length,1)
-  const prev=()=>goTo((current-1+DASHBOARDS.length)%DASHBOARDS.length,-1)
-  const dashboard=DASHBOARDS[current]
 
-  useEffect(()=>{timerRef.current=setInterval(next,8000);return()=>{if(timerRef.current)clearInterval(timerRef.current)}},[current])
-  useEffect(()=>{const close=()=>setMenuOpen(false);window.addEventListener('click',close);return()=>window.removeEventListener('click',close)},[])
+  const next = () => goTo((current + 1) % DASHBOARDS.length, 1)
+  const prev = () => goTo((current - 1 + DASHBOARDS.length) % DASHBOARDS.length, -1)
+  const dashboard = DASHBOARDS[current]
 
-  return <div style={{flex:1,display:'flex',flexDirection:'column',padding:'28px 32px 22px',gap:'18px',overflowY:'auto'}}>
-    <div style={{display:'flex',alignItems:'flex-end',justifyContent:'space-between',gap:'20px'}}>
-      <div><div style={{fontFamily:'JetBrains Mono,monospace',fontSize:'10px',letterSpacing:'.14em',textTransform:'uppercase',color:C.celeste,marginBottom:'5px'}}>Reportes ejecutivos</div><h1 style={{margin:0,fontFamily:'Outfit,sans-serif',fontWeight:700,fontSize:'23px',color:C.navy}}>Dashboards</h1></div>
-      <div style={{fontFamily:'Inter,sans-serif',fontSize:'11px',color:C.textSoft,background:C.white,border:`1px solid ${C.border}`,borderRadius:'20px',padding:'6px 11px'}}>{current+1} de {DASHBOARDS.length}</div>
-    </div>
+  useEffect(() => {
+    timerRef.current = setInterval(next, 8000)
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current)
+    }
+  }, [current])
 
-    <div style={{position:'relative',width:'100%',flex:'0 0 auto',minHeight:'560px',borderRadius:'14px',border:`1px solid ${C.border}`,background:'linear-gradient(135deg,#f8fbff 0%,#eef4fa 100%)',boxShadow:'0 3px 18px rgba(13,43,94,.08)',display:'flex',alignItems:'center',justifyContent:'center',padding:'30px 72px 26px',overflow:'hidden'}}>
-      <div style={{position:'absolute',inset:0,pointerEvents:'none',opacity:.35,backgroundImage:`radial-gradient(circle,${C.border} 1px,transparent 1px)`,backgroundSize:'24px 24px'}}/>
-
-      <div style={{position:'relative',width:'min(100%,1050px)',display:'flex',flexDirection:'column',alignItems:'center',gap:'14px',opacity:transitioning?0:1,transform:transitioning?`translateX(${dir*28}px)`:'translateX(0)',transition:'opacity .26s ease,transform .26s ease'}}>
-        <div style={{width:'min(100%,960px)',aspectRatio:'16 / 9',background:C.white,border:`1px solid ${C.border}`,borderRadius:'10px',overflow:'hidden',boxShadow:'0 8px 28px rgba(13,43,94,.12)',display:'flex',alignItems:'center',justifyContent:'center'}}>
-          <img src={dashboard.preview} alt={`Vista previa de ${dashboard.title}`} style={{width:'100%',height:'100%',objectFit:'contain',display:'block',background:'#fff'}} onError={e=>{e.currentTarget.style.display='none';const f=e.currentTarget.nextElementSibling as HTMLElement|null;if(f)f.style.display='flex'}}/>
-          <div style={{display:'none',width:'100%',height:'100%',alignItems:'center',justifyContent:'center',flexDirection:'column',gap:'10px',color:C.textSoft,background:C.white}}><IconPowerBI size={34}/><span style={{fontFamily:'Inter,sans-serif',fontSize:'12px'}}>Agrega la imagen en <strong>public/powerbi</strong></span></div>
+  return (
+    <div style={{
+      flex: 1,
+      minHeight: 0,
+      display: 'flex',
+      flexDirection: 'column',
+      padding: '16px 32px 12px',
+      gap: '10px',
+      overflow: 'hidden',
+    }}>
+      {/* Encabezado compacto: no roba espacio al dashboard */}
+      <div style={{
+        flex: '0 0 auto',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        minHeight: '34px',
+      }}>
+        <div>
+          <div style={{
+            fontFamily: 'JetBrains Mono, monospace',
+            fontSize: '9px',
+            letterSpacing: '.14em',
+            textTransform: 'uppercase',
+            color: C.celeste,
+            marginBottom: '2px',
+          }}>
+            Reportes ejecutivos
+          </div>
+          <h1 style={{
+            margin: 0,
+            fontFamily: 'Outfit, sans-serif',
+            fontWeight: 700,
+            fontSize: '22px',
+            lineHeight: 1.1,
+            color: C.navy,
+          }}>
+            Dashboards
+          </h1>
         </div>
 
-        <div style={{position:'relative',width:'min(100%,960px)'}}>
-          <div style={{display:'flex',alignItems:'center',gap:'12px',minHeight:'62px',padding:'10px 12px 10px 14px',background:C.white,border:`1px solid ${C.border}`,borderRadius:'10px',boxShadow:'0 2px 9px rgba(13,43,94,.06)'}}>
-            <div style={{width:'38px',height:'38px',flexShrink:0,borderRadius:'8px',background:'#fff8d8',border:'1px solid #f0df86',display:'flex',alignItems:'center',justifyContent:'center'}}><IconPowerBI size={22}/></div>
-            <div style={{minWidth:0,flex:1}}><div title={dashboard.fileName} style={{fontFamily:'Inter,sans-serif',fontWeight:600,fontSize:'12px',color:C.text,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{dashboard.fileName}</div><div style={{fontFamily:'JetBrains Mono,monospace',fontSize:'9px',color:C.textSoft,marginTop:'3px',letterSpacing:'.05em'}}>ARCHIVO POWER BI · .PBIX</div></div>
-            <div style={{position:'relative',flexShrink:0}}>
-              <button type="button" aria-label="Más opciones" onClick={e=>{e.stopPropagation();setMenuOpen(o=>!o)}} style={{width:'34px',height:'34px',borderRadius:'7px',border:`1px solid ${C.border}`,background:C.white,display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer'}}><IconMore/></button>
-              {menuOpen&&<div onClick={e=>e.stopPropagation()} style={{position:'absolute',right:0,bottom:'42px',zIndex:10,width:'180px',padding:'5px',background:C.white,border:`1px solid ${C.border}`,borderRadius:'9px',boxShadow:'0 10px 28px rgba(13,43,94,.16)'}}>
-                <a href={dashboard.file} download={dashboard.fileName} style={{display:'flex',alignItems:'center',gap:'9px',padding:'9px 10px',borderRadius:'6px',color:C.textMid,textDecoration:'none',fontFamily:'Inter,sans-serif',fontSize:'12px',fontWeight:500}}><IconDownload size={15} color={C.navyMid}/>Descargar PBIX</a>
-              </div>}
-            </div>
-          </div>
+        <div style={{
+          fontFamily: 'Inter, sans-serif',
+          fontSize: '10px',
+          color: C.textSoft,
+          background: C.white,
+          border: `1px solid ${C.border}`,
+          borderRadius: '20px',
+          padding: '5px 10px',
+        }}>
+          {current + 1} de {DASHBOARDS.length}
         </div>
       </div>
 
-      <button onClick={prev} aria-label="Dashboard anterior" style={navBtn}>‹</button>
-      <button onClick={next} aria-label="Dashboard siguiente" style={{...navBtn,right:'16px',left:'auto'}}>›</button>
-      <div style={{position:'absolute',bottom:'10px',left:'50%',transform:'translateX(-50%)',display:'flex',gap:'7px',alignItems:'center'}}>
-        {DASHBOARDS.map((_,i)=><button key={i} onClick={()=>goTo(i,i>current?1:-1)} aria-label={`Ir al dashboard ${i+1}`} style={{width:i===current?'22px':'7px',height:'7px',borderRadius:'4px',padding:0,background:i===current?C.navy:C.border,border:'none',cursor:'pointer',transition:'all .28s ease'}}/>)}</div>
-    </div>
+      {/* Marco principal: ocupa TODO el espacio disponible y nunca genera scroll */}
+      <section style={{
+        position: 'relative',
+        flex: '1 1 auto',
+        minHeight: 0,
+        width: '100%',
+        borderRadius: '14px',
+        border: `1px solid ${C.border}`,
+        background: 'linear-gradient(135deg,#f9fbfe 0%,#eef4fa 100%)',
+        boxShadow: '0 3px 18px rgba(13,43,94,.07)',
+        overflow: 'hidden',
+      }}>
+        {/* Patrón muy sutil del fondo */}
+        <div style={{
+          position: 'absolute',
+          inset: 0,
+          pointerEvents: 'none',
+          opacity: .22,
+          backgroundImage: `radial-gradient(circle,${C.border} 1px,transparent 1px)`,
+          backgroundSize: '24px 24px',
+        }} />
 
-    <div style={{display:'flex',justifyContent:'flex-end'}}><button onClick={onVerCartera} style={{background:C.blue1,border:'none',borderRadius:'7px',color:'#fff',fontFamily:'Outfit,sans-serif',fontWeight:600,fontSize:'14px',padding:'11px 26px',cursor:'pointer',letterSpacing:'.03em'}}>Ver Cartera Clientes →</button></div>
-  </div>
+        <div style={{
+          position: 'relative',
+          zIndex: 1,
+          width: '100%',
+          height: '100%',
+          minHeight: 0,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '14px 64px 10px',
+        }}>
+          {/*
+            El marco usa EXACTAMENTE la proporción del dashboard:
+            1420 × 791 = 1.7952.
+            La altura se adapta al espacio disponible y la anchura se calcula
+            automáticamente por aspect-ratio. No hay letterbox ni barras.
+          */}
+          <div style={{
+            position: 'relative',
+            height: 'calc(100% - 44px)',
+            maxHeight: '100%',
+            width: 'auto',
+            aspectRatio: '1420 / 791',
+            maxWidth: '100%',
+            flex: '0 1 auto',
+            background: C.white,
+            border: `1px solid ${C.border}`,
+            borderRadius: '9px',
+            overflow: 'hidden',
+            boxShadow: '0 7px 24px rgba(13,43,94,.11)',
+            opacity: transitioning ? 0 : 1,
+            transform: transitioning ? `translateX(${dir * 22}px)` : 'translateX(0)',
+            transition: 'opacity .24s ease, transform .24s ease',
+          }}>
+            <img
+              src={dashboard.preview}
+              alt={`Vista previa de ${dashboard.title}`}
+              style={{
+                width: '100%',
+                height: '100%',
+                display: 'block',
+                objectFit: 'fill',
+                background: '#fff',
+              }}
+              onError={e => {
+                e.currentTarget.style.display = 'none'
+                const fallback = e.currentTarget.nextElementSibling as HTMLElement | null
+                if (fallback) fallback.style.display = 'flex'
+              }}
+            />
+            <div style={{
+              display: 'none',
+              position: 'absolute',
+              inset: 0,
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexDirection: 'column',
+              gap: '8px',
+              color: C.textSoft,
+              background: C.white,
+              fontFamily: 'Inter, sans-serif',
+              fontSize: '12px',
+            }}>
+              <IconPowerBI size={34} />
+              <span>Agrega la imagen en <strong>public/powerbi</strong></span>
+            </div>
+          </div>
+
+          {/* Archivo: deliberadamente mínimo. Solo nombre + tres puntos */}
+          <div style={{
+            width: 'min(100%, 1420px)',
+            minHeight: '34px',
+            flex: '0 0 34px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '12px',
+            padding: '0 4px 0 2px',
+            marginTop: '7px',
+            opacity: transitioning ? 0 : 1,
+            transition: 'opacity .24s ease',
+          }}>
+            <div
+              title={dashboard.fileName}
+              style={{
+                minWidth: 0,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                fontFamily: 'Inter, sans-serif',
+                fontSize: '12px',
+                fontWeight: 600,
+                color: C.navy,
+                lineHeight: 1.2,
+              }}
+            >
+              {dashboard.fileName}
+            </div>
+
+            {/* Los tres puntos son directamente el botón de descarga */}
+            <a
+              href={dashboard.file}
+              download={dashboard.fileName}
+              aria-label={`Descargar ${dashboard.fileName}`}
+              title="Descargar archivo PBIX"
+              style={{
+                flex: '0 0 30px',
+                width: '30px',
+                height: '30px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderRadius: '6px',
+                color: C.navyMid,
+                textDecoration: 'none',
+                cursor: 'pointer',
+              }}
+            >
+              <IconMore color={C.navyMid} />
+            </a>
+          </div>
+        </div>
+
+        {/* Navegación lateral */}
+        <button onClick={prev} aria-label="Dashboard anterior" style={{
+          ...navBtn,
+          left: '14px',
+        }}>
+          ‹
+        </button>
+        <button onClick={next} aria-label="Dashboard siguiente" style={{
+          ...navBtn,
+          right: '14px',
+          left: 'auto',
+        }}>
+          ›
+        </button>
+
+        {/* Indicadores */}
+        <div style={{
+          position: 'absolute',
+          bottom: '6px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          display: 'flex',
+          gap: '6px',
+          alignItems: 'center',
+        }}>
+          {DASHBOARDS.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => goTo(i, i > current ? 1 : -1)}
+              aria-label={`Ir al dashboard ${i + 1}`}
+              style={{
+                width: i === current ? '20px' : '6px',
+                height: '6px',
+                borderRadius: '4px',
+                padding: 0,
+                background: i === current ? C.navy : C.border,
+                border: 'none',
+                cursor: 'pointer',
+                transition: 'all .24s ease',
+              }}
+            />
+          ))}
+        </div>
+      </section>
+
+      {/* Botón de cartera: se mantiene fuera del marco y compacto */}
+      <div style={{
+        flex: '0 0 auto',
+        display: 'flex',
+        justifyContent: 'flex-end',
+      }}>
+        <button
+          onClick={onVerCartera}
+          style={{
+            background: C.blue1,
+            border: 'none',
+            borderRadius: '7px',
+            color: '#fff',
+            fontFamily: 'Outfit, sans-serif',
+            fontWeight: 600,
+            fontSize: '13px',
+            padding: '9px 22px',
+            cursor: 'pointer',
+            letterSpacing: '.03em',
+          }}
+        >
+          Ver Cartera Clientes →
+        </button>
+      </div>
+    </div>
+  )
 }
 
 const navBtn: React.CSSProperties = {
-  position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)',
-  width: '34px', height: '34px', borderRadius: '50%',
-  background: C.white, border: `1px solid ${C.border}`,
-  color: C.navyMid, fontSize: '20px', cursor: 'pointer',
-  display: 'flex', alignItems: 'center', justifyContent: 'center',
-  boxShadow: '0 1px 6px rgba(13,43,94,0.1)', lineHeight: '1', zIndex: 2,
+  position: 'absolute',
+  top: '50%',
+  transform: 'translateY(-50%)',
+  width: '34px',
+  height: '34px',
+  borderRadius: '50%',
+  background: C.white,
+  border: `1px solid ${C.border}`,
+  color: C.navyMid,
+  fontSize: '20px',
+  cursor: 'pointer',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  boxShadow: '0 1px 6px rgba(13,43,94,0.10)',
+  lineHeight: '1',
+  zIndex: 2,
 }
 
 // ── Vista 2: Lista de Clientes con Filtros, Saldo y Ordenamiento ────────────
