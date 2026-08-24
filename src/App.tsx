@@ -345,8 +345,27 @@ function View1({ onVerCartera }: { onVerCartera: () => void }) {
           onClick={prev}
           aria-label="Dashboard anterior"
           style={{
-            ...navBtn,
+            position: 'absolute',
+            top: '50%',
             left: '2px',
+            transform: 'translateY(-50%)',
+            width: '34px',
+            height: '34px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 0,
+            border: `1px solid ${C.border}`,
+            borderRadius: '50%',
+            background: 'rgba(255,255,255,.96)',
+            color: C.navyMid,
+            fontFamily: 'Inter, sans-serif',
+            fontSize: '24px',
+            fontWeight: 400,
+            lineHeight: 1,
+            cursor: 'pointer',
+            boxShadow: '0 2px 8px rgba(13,43,94,.10)',
+            zIndex: 5,
           }}
         >
           ‹
@@ -542,9 +561,28 @@ function View1({ onVerCartera }: { onVerCartera: () => void }) {
           onClick={next}
           aria-label="Dashboard siguiente"
           style={{
-            ...navBtn,
+            position: 'absolute',
+            top: '50%',
             right: '2px',
             left: 'auto',
+            transform: 'translateY(-50%)',
+            width: '34px',
+            height: '34px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 0,
+            border: `1px solid ${C.border}`,
+            borderRadius: '50%',
+            background: 'rgba(255,255,255,.96)',
+            color: C.navyMid,
+            fontFamily: 'Inter, sans-serif',
+            fontSize: '24px',
+            fontWeight: 400,
+            lineHeight: 1,
+            cursor: 'pointer',
+            boxShadow: '0 2px 8px rgba(13,43,94,.10)',
+            zIndex: 5,
           }}
         >
           ›
