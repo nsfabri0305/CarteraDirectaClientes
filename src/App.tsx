@@ -374,18 +374,19 @@ function View1({ onVerCartera }: { onVerCartera: () => void }) {
         {/* 
           ESTE ES EL PUNTO CLAVE DEL DISEÑO.
 
-          El ancho se calcula simultáneamente por:
-          1. ancho disponible
-          2. alto disponible
+          El tamaño se calcula respetando simultáneamente:
+          1. el ancho disponible
+          2. el alto real disponible
 
-          La imagen mantiene SIEMPRE 1420 / 791.
+          La imagen mantiene SIEMPRE 1992 / 1152.
+          Así no se estira ni se deforma.
           Se reserva solo el espacio mínimo para el nombre y los indicadores.
         */}
         <div
           style={{
             position: 'relative',
-            width: 'min(calc(100% - 96px), calc((100% - 46px) * 1420 / 791))',
-            maxWidth: '1420px',
+            width: 'min(calc(100% - 96px), calc((100dvh - 199px) * 1992 / 1152))',
+            maxWidth: '1992px',
             maxHeight: '100%',
             flex: '0 0 auto',
             display: 'flex',
@@ -394,12 +395,12 @@ function View1({ onVerCartera }: { onVerCartera: () => void }) {
             boxSizing: 'border-box',
           }}
         >
-          {/* Marco de la imagen: EXACTAMENTE 1420 × 791 */}
+          {/* Marco de la imagen: EXACTAMENTE 1992 × 1152 */}
           <div
             style={{
               position: 'relative',
               width: '100%',
-              aspectRatio: '1420 / 791',
+              aspectRatio: '1992 / 1152',
               background: C.white,
               border: `1px solid ${C.border}`,
               borderRadius: '10px',
