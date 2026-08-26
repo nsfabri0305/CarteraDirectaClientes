@@ -1425,7 +1425,7 @@ function ClientModal({
               </Btn>
             ) : (
               <Btn color={C.textSoft} border={C.border} bg={C.white} onClick={onRequestUnlock}>
-                🔒 Editar
+                Editar
               </Btn>
             )}
             {canEdit && isEdit && (
