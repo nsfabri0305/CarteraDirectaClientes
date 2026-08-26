@@ -285,7 +285,13 @@ function View1({ onVerCartera }: { onVerCartera: () => void }) {
 
   useEffect(() => {
     timerRef.current = setInterval(() => {
+      setDir(1)
+      setTransitioning(true)
       setCurrent(prevIndex => (prevIndex + 1) % DASHBOARDS.length)
+
+      window.setTimeout(() => {
+        setTransitioning(false)
+      }, 220)
     }, 8000)
 
     return () => {
@@ -395,9 +401,9 @@ function View1({ onVerCartera }: { onVerCartera: () => void }) {
                   top: '50%',
                   left: '50%',
                   width:
-                    'min(calc(56% - 40px), calc((100dvh - 199px) * 1992 / 1152 * 0.72))',
+                    'min(calc(64% - 24px), calc((100dvh - 199px) * 1992 / 1152 * 0.86))',
                   aspectRatio: '1992 / 1152',
-                  transform: `translate(calc(-50% + ${side * 78}%), -50%) scale(0.84)`,
+                  transform: `translate(calc(-50% + ${side * 66}%), -50%) scale(0.92)`,
                   background: C.white,
                   border: `1px solid ${C.border}`,
                   borderRadius: '10px',
@@ -406,7 +412,7 @@ function View1({ onVerCartera }: { onVerCartera: () => void }) {
                   boxShadow: '0 8px 24px rgba(13,43,94,.10)',
                   padding: 0,
                   cursor: 'pointer',
-                  opacity: transitioning ? 0 : 0.45,
+                  opacity: transitioning ? 0 : 0.85,
                   zIndex: 2,
                   transition: 'opacity .22s ease, transform .22s ease',
                 }}
@@ -419,9 +425,10 @@ function View1({ onVerCartera }: { onVerCartera: () => void }) {
                     height: '100%',
                     display: 'block',
                     objectFit: 'fill',
-                    filter: 'saturate(0.65) brightness(0.98)',
+                    filter: 'saturate(0.7) brightness(0.97)',
                   }}
                 />
+                <div style={{ position: 'absolute', inset: 0, background: 'rgba(240,244,248,0.22)' }} />
               </button>
             )
           })}
@@ -1049,7 +1056,7 @@ function PasswordModal({ onClose, onSuccess }: { onClose: () => void; onSuccess:
           Desbloquear edición
         </div>
         <div style={{ fontFamily: 'Inter, sans-serif', fontSize: '12px', color: C.textSoft, marginBottom: '14px' }}>
-          Ingresa la contraseña para poder editar.
+          Ingresa la contraseña para poder editar los registros.
         </div>
 
         <input
@@ -1160,55 +1167,375 @@ function Grid({ cols = 3, children }: { cols?: number; children: React.ReactNode
   )
 }
 
-// ── Tabla de Seguimiento ─────────────────────────────────────────────────────
-function SeguimientoTable({ rows, highlight = false }: {
-  rows: { fecha: string; estado: string; fechaResp: string }[];
-  highlight?: boolean;
-}) {
+// ── Seguimiento: tabla editable con adjuntos, persistida en Supabase ────────
+const SEGUIMIENTO_BUCKET = 'seguimiento-adjuntos'
+
+type SeguimientoRow = {
+  id: string
+  client_id: string | number
+  fecha_correo: string | null
+  correo_archivo_nombre: string | null
+  correo_archivo_url: string | null
+  estado_respuesta: 'respondido' | 'no_respondido'
+  fecha_respuesta: string | null
+  respuesta_archivo_nombre: string | null
+  respuesta_archivo_url: string | null
+  created_at?: string
+}
+
+function IconPencilSmall({ size = 10, color = C.textSoft }: { size?: number; color?: string }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 20h9" />
+      <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
+    </svg>
+  )
+}
+
+const seguimientoGridCols = '112px minmax(150px,1.5fr) 138px 112px 52px'
+
+function SeguimientoTableHead() {
   const headers = ['Fecha Correo', 'Correo Cliente', 'Estado de Respuesta', 'Fecha Respuesta', 'Respuesta']
   return (
-    <div style={{ overflowX: 'auto' }}>
-      <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '500px' }}>
-        <thead>
-          <tr>
-            {headers.map(h => (
-              <th key={h} style={{
-                padding: '8px 12px', background: C.navy,
-                fontFamily: 'JetBrains Mono, monospace', fontSize: '9px',
-                letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.8)',
-                textAlign: 'left', borderBottom: `1px solid ${C.border}`, whiteSpace: 'nowrap',
-              }}>{h}</th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((row, i) => (
-            <tr key={i} style={{ background: highlight ? `${C.s6}0f` : i % 2 === 0 ? C.white : C.bg }}>
-              <td style={td}>{row.fecha}</td>
-              <td style={td}><IconMail size={15} color={C.celeste} /></td>
-              <td style={td}>
-                <span style={{
-                  padding: '2px 9px', borderRadius: '20px',
-                  background: `${C.s2}18`, color: C.s2,
-                  fontFamily: 'JetBrains Mono, monospace', fontSize: '10px',
-                  border: `1px solid ${C.s2}44`,
-                }}>
-                  {row.estado}
-                </span>
-              </td>
-              <td style={td}>{row.fechaResp}</td>
-              <td style={td}><IconMail size={15} color={C.s6} /></td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+    <div style={{
+      display: 'grid', gridTemplateColumns: seguimientoGridCols, gap: '0 10px',
+      padding: '8px 12px', background: C.navy, borderRadius: '6px 6px 0 0',
+    }}>
+      {headers.map(h => (
+        <span key={h} style={{
+          fontFamily: 'JetBrains Mono, monospace', fontSize: '9px',
+          letterSpacing: '0.08em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.8)',
+          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+        }}>
+          {h}
+        </span>
+      ))}
     </div>
   )
 }
 
-const td: React.CSSProperties = {
-  padding: '9px 12px', fontFamily: 'Inter, sans-serif', fontSize: '13px',
-  color: C.textMid, borderBottom: `1px solid ${C.surface}`, whiteSpace: 'nowrap',
+const seguimientoDateStyle: React.CSSProperties = {
+  width: '100%', boxSizing: 'border-box', padding: '5px 6px',
+  background: C.white, border: `1px solid ${C.border}`, borderRadius: '5px',
+  fontFamily: 'JetBrains Mono, monospace', fontSize: '11px', color: C.textMid, outline: 'none',
+}
+
+function AttachmentField({
+  fileName,
+  fileUrl,
+  disabled,
+  canEdit,
+  color,
+  showName,
+  onUpload,
+}: {
+  fileName: string | null
+  fileUrl: string | null
+  disabled: boolean
+  canEdit: boolean
+  color: string
+  showName: boolean
+  onUpload: (file: File) => void
+}) {
+  const inputRef = useRef<HTMLInputElement>(null)
+  const canUpload = canEdit && !disabled
+
+  const handleIconClick = () => {
+    if (disabled) return
+    if (fileUrl) {
+      window.open(fileUrl, '_blank', 'noopener,noreferrer')
+    } else if (canUpload) {
+      inputRef.current?.click()
+    }
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', minWidth: 0 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+        <button
+          onClick={handleIconClick}
+          disabled={disabled}
+          title={fileUrl ? (fileName || 'Ver adjunto') : canUpload ? 'Adjuntar documento' : 'Sin adjunto'}
+          style={{
+            background: 'none', border: 'none', padding: 0, margin: 0,
+            cursor: disabled ? 'default' : 'pointer',
+            opacity: disabled ? 0.35 : 1,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}
+        >
+          <IconMail size={16} color={fileUrl ? color : C.textSoft} />
+        </button>
+
+        {canUpload && fileUrl && (
+          <button
+            onClick={() => inputRef.current?.click()}
+            title="Reemplazar adjunto"
+            style={{
+              background: C.white, border: `1px solid ${C.border}`, borderRadius: '4px',
+              width: '16px', height: '16px', padding: 0, display: 'flex',
+              alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0,
+            }}
+          >
+            <IconPencilSmall />
+          </button>
+        )}
+
+        {canUpload && (
+          <input
+            ref={inputRef}
+            type="file"
+            onChange={e => {
+              const f = e.target.files?.[0]
+              if (f) onUpload(f)
+              e.target.value = ''
+            }}
+            style={{ display: 'none' }}
+          />
+        )}
+      </div>
+
+      {showName && (
+        <span
+          title={fileName || ''}
+          style={{
+            fontFamily: 'Inter, sans-serif', fontSize: '10px', color: C.textSoft,
+            whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%',
+          }}
+        >
+          {fileName || (canUpload ? 'Sin adjuntar' : '—')}
+        </span>
+      )}
+    </div>
+  )
+}
+
+function SeguimientoRowView({
+  row,
+  canEdit,
+  highlight = false,
+  onChange,
+}: {
+  row: SeguimientoRow
+  canEdit: boolean
+  highlight?: boolean
+  onChange: (id: string, patch: Partial<SeguimientoRow>) => void
+}) {
+  const isRespondido = row.estado_respuesta === 'respondido'
+
+  const uploadFile = async (file: File, field: 'correo' | 'respuesta') => {
+    try {
+      const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_')
+      const path = `${row.client_id}/${row.id}/${field}-${Date.now()}-${safeName}`
+      const { error: upErr } = await supabase.storage.from(SEGUIMIENTO_BUCKET).upload(path, file, { upsert: true })
+      if (upErr) throw upErr
+      const { data } = supabase.storage.from(SEGUIMIENTO_BUCKET).getPublicUrl(path)
+      onChange(row.id, field === 'correo'
+        ? { correo_archivo_nombre: file.name, correo_archivo_url: data.publicUrl }
+        : { respuesta_archivo_nombre: file.name, respuesta_archivo_url: data.publicUrl })
+    } catch (err: any) {
+      alert(`No se pudo subir el archivo.\n\n${err?.message || 'Error desconocido'}`)
+    }
+  }
+
+  return (
+    <div style={{
+      display: 'grid', gridTemplateColumns: seguimientoGridCols, gap: '0 10px', alignItems: 'center',
+      padding: '9px 12px', background: highlight ? `${C.s6}0d` : C.white, borderBottom: `1px solid ${C.surface}`,
+    }}>
+      <input
+        type="date"
+        value={row.fecha_correo || ''}
+        disabled={!canEdit}
+        onChange={e => onChange(row.id, { fecha_correo: e.target.value || null })}
+        style={{ ...seguimientoDateStyle, opacity: canEdit ? 1 : 0.75 }}
+      />
+
+      <AttachmentField
+        fileName={row.correo_archivo_nombre}
+        fileUrl={row.correo_archivo_url}
+        disabled={false}
+        canEdit={canEdit}
+        color={C.celeste}
+        showName
+        onUpload={f => uploadFile(f, 'correo')}
+      />
+
+      <select
+        value={row.estado_respuesta}
+        disabled={!canEdit}
+        onChange={e => onChange(row.id, { estado_respuesta: e.target.value as SeguimientoRow['estado_respuesta'] })}
+        style={{
+          padding: '4px 8px', borderRadius: '20px', fontFamily: 'JetBrains Mono, monospace',
+          fontSize: '10px', fontWeight: 600, cursor: canEdit ? 'pointer' : 'default', outline: 'none',
+          background: isRespondido ? `${C.s1}18` : `${C.s5}18`,
+          color: isRespondido ? C.s1 : C.s5,
+          border: `1px solid ${isRespondido ? C.s1 : C.s5}55`,
+        }}
+      >
+        <option value="no_respondido">No respondido</option>
+        <option value="respondido">Respondido</option>
+      </select>
+
+      <input
+        type="date"
+        value={row.fecha_respuesta || ''}
+        disabled={!canEdit || !isRespondido}
+        onChange={e => onChange(row.id, { fecha_respuesta: e.target.value || null })}
+        style={{ ...seguimientoDateStyle, opacity: canEdit && isRespondido ? 1 : 0.45 }}
+      />
+
+      <AttachmentField
+        fileName={row.respuesta_archivo_nombre}
+        fileUrl={row.respuesta_archivo_url}
+        disabled={!isRespondido}
+        canEdit={canEdit}
+        color={C.s6}
+        showName={false}
+        onUpload={f => uploadFile(f, 'respuesta')}
+      />
+    </div>
+  )
+}
+
+function SeguimientoManager({ clientId, canEdit }: { clientId: string | number; canEdit: boolean }) {
+  const [rows, setRows] = useState<SeguimientoRow[]>([])
+  const [loading, setLoading] = useState(true)
+  const [showHist, setShowHist] = useState(false)
+  const [creating, setCreating] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+
+    async function load() {
+      setLoading(true)
+      const { data, error } = await supabase
+        .from('seguimientos')
+        .select('*')
+        .eq('client_id', clientId)
+        .order('fecha_correo', { ascending: false })
+
+      if (!cancelled) {
+        if (error) {
+          console.error('Error al cargar seguimiento:', error)
+        } else {
+          setRows(data || [])
+        }
+        setLoading(false)
+      }
+    }
+
+    load()
+    return () => { cancelled = true }
+  }, [clientId])
+
+  const sorted = useMemo(() => {
+    return [...rows].sort((a, b) => {
+      const da = a.fecha_correo ? new Date(a.fecha_correo).getTime() : 0
+      const db = b.fecha_correo ? new Date(b.fecha_correo).getTime() : 0
+      return db - da
+    })
+  }, [rows])
+
+  const latest = sorted[0]
+  const rest = sorted.slice(1)
+
+  const updateRow = async (id: string, patch: Partial<SeguimientoRow>) => {
+    setRows(prev => prev.map(r => (r.id === id ? { ...r, ...patch } : r)))
+    const { error } = await supabase.from('seguimientos').update(patch).eq('id', id)
+    if (error) {
+      console.error('Error al guardar seguimiento:', error)
+      alert(`No se pudo guardar el cambio.\n\n${error.message}`)
+    }
+  }
+
+  const handleCreate = async () => {
+    if (creating) return
+    try {
+      setCreating(true)
+      const { data, error } = await supabase
+        .from('seguimientos')
+        .insert({ client_id: clientId, estado_respuesta: 'no_respondido' })
+        .select()
+        .single()
+
+      if (error) throw error
+      setRows(prev => [data as SeguimientoRow, ...prev])
+    } catch (err: any) {
+      alert(`No se pudo crear el flujo de correo.\n\n${err?.message || 'Error desconocido'}`)
+    } finally {
+      setCreating(false)
+    }
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
+        <div style={{
+          fontFamily: 'Outfit, sans-serif', fontWeight: 600, fontSize: '12px',
+          color: C.s6, letterSpacing: '0.02em',
+        }}>
+          Última Conversación con el Cliente
+        </div>
+
+        {canEdit && (
+          <button
+            onClick={handleCreate}
+            disabled={creating}
+            style={{
+              background: C.blue1, border: 'none', borderRadius: '6px', color: '#fff',
+              fontFamily: 'Outfit, sans-serif', fontWeight: 600, fontSize: '11px',
+              padding: '6px 12px', cursor: creating ? 'default' : 'pointer', opacity: creating ? 0.7 : 1,
+            }}
+          >
+            {creating ? 'Creando...' : '+ Crear flujo de correo'}
+          </button>
+        )}
+      </div>
+
+      <div style={{ border: `1px solid ${C.border}`, borderRadius: '8px', overflow: 'hidden', boxShadow: '0 1px 4px rgba(13,43,94,0.05)' }}>
+        <SeguimientoTableHead />
+        {loading ? (
+          <div style={{ padding: '18px', textAlign: 'center', color: C.textSoft, fontFamily: 'Inter, sans-serif', fontSize: '12px', background: C.white }}>
+            Cargando seguimiento...
+          </div>
+        ) : !latest ? (
+          <div style={{ padding: '18px', textAlign: 'center', color: C.textSoft, fontFamily: 'Inter, sans-serif', fontSize: '12px', background: C.white }}>
+            Sin registros de seguimiento todavía.
+          </div>
+        ) : (
+          <SeguimientoRowView row={latest} canEdit={canEdit} onChange={updateRow} highlight />
+        )}
+      </div>
+
+      {rest.length > 0 && (
+        <div>
+          <button
+            onClick={() => setShowHist(h => !h)}
+            style={{
+              background: C.white, border: `1px solid ${C.border}`, borderRadius: '6px',
+              padding: '7px 14px', color: C.navyMid,
+              fontFamily: 'Outfit, sans-serif', fontWeight: 600, fontSize: '12px',
+              cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '7px',
+              boxShadow: '0 1px 3px rgba(13,43,94,0.07)',
+            }}
+          >
+            <IconMail size={13} color={C.celeste} />
+            Ver todo el historial de mensajes ({rest.length})
+            <IconChevron open={showHist} color={C.textSoft} />
+          </button>
+
+          {showHist && (
+            <div style={{ marginTop: '10px', border: `1px solid ${C.border}`, borderRadius: '8px', overflow: 'hidden' }}>
+              <SeguimientoTableHead />
+              {rest.map(r => (
+                <SeguimientoRowView key={r.id} row={r} canEdit={canEdit} onChange={updateRow} />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
 }
 
 // ── Botón Personalizable ─────────────────────────────────────────────────────
@@ -1241,17 +1568,12 @@ function ClientModal({
   onSaved: (updatedClient: any) => void;
 }) {
   const [isEdit, setIsEdit] = useState(false)
-  const [showHist, setShowHist] = useState(false)
   const [editData, setEditData] = useState<any>({ ...client })
   const [saving, setSaving] = useState(false)
 
   const dni = formatDNI(getValue(editData, 'DNI', 'dni', 'Dni'))
   const nombre = getValue(editData, 'NOMBRE', 'nombre', 'CLIENTE', 'cliente', 'TITULAR')
   const prestamo = formatPrestamo(getValue(editData, 'N° PRESTAMO', 'N° PRESTAMO ', 'PRESTAMO', 'n_prestamo', 'prestamo'))
-
-  const histRows = Array.from({ length: 5 }, () => ({
-    fecha: '##/##/####', estado: '---', fechaResp: '##/##/####',
-  }))
 
   const updateField = (value: string, ...keys: string[]) => {
     const actualKey = getActualKey(editData, ...keys)
@@ -1425,7 +1747,7 @@ function ClientModal({
               </Btn>
             ) : (
               <Btn color={C.textSoft} border={C.border} bg={C.white} onClick={onRequestUnlock}>
-                Editar
+                🔒 Editar
               </Btn>
             )}
             {canEdit && isEdit && (
@@ -1504,41 +1826,8 @@ function ClientModal({
           </Section>
 
           {/* 6. Seguimiento */}
-          <Section title="6. Seguimiento" accent={C.s6} defaultOpen>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <div>
-                <div style={{
-                  fontFamily: 'Outfit, sans-serif', fontWeight: 600, fontSize: '12px',
-                  color: C.s6, marginBottom: '10px', letterSpacing: '0.02em',
-                }}>
-                  Última Conversación con el Cliente
-                </div>
-                <SeguimientoTable rows={[{ fecha: '##/##/####', estado: '---', fechaResp: '##/##/####' }]} highlight />
-              </div>
-
-              <div>
-                <button
-                  onClick={() => setShowHist(h => !h)}
-                  style={{
-                    background: C.white, border: `1px solid ${C.border}`, borderRadius: '6px',
-                    padding: '7px 14px', color: C.navyMid,
-                    fontFamily: 'Outfit, sans-serif', fontWeight: 600, fontSize: '12px',
-                    cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '7px',
-                    boxShadow: '0 1px 3px rgba(13,43,94,0.07)',
-                  }}
-                >
-                  <IconMail size={13} color={C.celeste} />
-                  Ver todo el historial de mensajes
-                  <IconChevron open={showHist} color={C.textSoft} />
-                </button>
-
-                {showHist && (
-                  <div style={{ marginTop: '12px' }}>
-                    <SeguimientoTable rows={histRows} />
-                  </div>
-                )}
-              </div>
-            </div>
+          <Section title="6. Seguimiento (2026)" accent={C.s6} defaultOpen>
+            <SeguimientoManager clientId={client.id} canEdit={canEdit} />
           </Section>
         </div>
       </div>
