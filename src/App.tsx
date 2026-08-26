@@ -121,6 +121,16 @@ const DASHBOARDS = [
   },
 ]
 
+// Distancia circular más corta entre el índice i y el índice actual,
+// usada para el efecto "coverflow" (peeks a los lados).
+function relOffset(i: number, current: number, n: number): number {
+  if (n <= 0) return 0
+  let diff = i - current
+  while (diff > n / 2) diff -= n
+  while (diff < -n / 2) diff += n
+  return diff
+}
+
 function IconPowerBI({ size = 22 }: { size?: number }) {
   return <svg width={size} height={size} viewBox="0 0 24 24" fill="none"><rect x="4" y="8" width="4" height="11" rx="1" fill="#f2c811"/><rect x="10" y="5" width="4" height="14" rx="1" fill="#f2c811" opacity=".88"/><rect x="16" y="2" width="4" height="17" rx="1" fill="#f2c811" opacity=".72"/></svg>
 }
@@ -143,7 +153,15 @@ function IconSearch() {
 }
 
 // ── Header Superior ──────────────────────────────────────────────────────────
-function Header({ onLogoClick }: { onLogoClick: () => void }) {
+function Header({
+  onLogoClick,
+  isUnlocked,
+  onLockClick,
+}: {
+  onLogoClick: () => void
+  isUnlocked: boolean
+  onLockClick: () => void
+}) {
   return (
     <header
       style={{
@@ -161,29 +179,33 @@ function Header({ onLogoClick }: { onLogoClick: () => void }) {
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-        <div
+        {/* Candado: sin contraseña / con contraseña. Click abre el modal de contraseña
+            (o vuelve a bloquear si ya está desbloqueado). */}
+        <button
+          onClick={onLockClick}
+          title={isUnlocked ? 'Edición desbloqueada (clic para bloquear)' : 'Clic para desbloquear la edición'}
+          aria-label={isUnlocked ? 'Bloquear edición' : 'Desbloquear edición'}
           style={{
             width: '28px',
             height: '28px',
             borderRadius: '6px',
             background: 'rgba(255,255,255,.15)',
+            border: 'none',
+            padding: 0,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
+            cursor: 'pointer',
+            overflow: 'hidden',
           }}
         >
-          <svg
-            width="14"
-            height="14"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="#fff"
-            strokeWidth="2.2"
-          >
-            <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
-            <polyline points="9 22 9 12 15 12 15 22" />
-          </svg>
-        </div>
+          <img
+            src={isUnlocked ? '/icons/unlocked.png' : '/icons/locked.png'}
+            alt={isUnlocked ? 'Edición desbloqueada' : 'Edición bloqueada'}
+            draggable={false}
+            style={{ width: '18px', height: '18px', objectFit: 'contain', display: 'block', pointerEvents: 'none' }}
+          />
+        </button>
 
         <span
           style={{
@@ -198,22 +220,26 @@ function Header({ onLogoClick }: { onLogoClick: () => void }) {
         </span>
       </div>
 
+      {/* Logo FMV como imagen. Sigue llevando al inicio, igual que antes. */}
       <button
         onClick={onLogoClick}
+        aria-label="Ir al inicio"
         style={{
           background: 'none',
-          border: '1px solid rgba(255,255,255,.25)',
-          borderRadius: '6px',
+          border: 'none',
+          padding: 0,
           cursor: 'pointer',
-          padding: '5px 14px',
-          fontFamily: 'Outfit,sans-serif',
-          fontWeight: 800,
-          fontSize: '18px',
-          letterSpacing: '.18em',
-          color: '#fff',
+          display: 'flex',
+          alignItems: 'center',
+          height: '32px',
         }}
       >
-        FMV
+        <img
+          src="/icons/logo-fmv.png"
+          alt="FMV"
+          draggable={false}
+          style={{ height: '100%', width: 'auto', display: 'block', pointerEvents: 'none' }}
+        />
       </button>
     </header>
   )
@@ -224,7 +250,16 @@ function View1({ onVerCartera }: { onVerCartera: () => void }) {
   const [current, setCurrent] = useState(0)
   const [transitioning, setTransitioning] = useState(false)
   const [dir, setDir] = useState<1 | -1>(1)
+  const [isWide, setIsWide] = useState(
+    typeof window !== 'undefined' ? window.innerWidth >= 900 : true
+  )
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
+  useEffect(() => {
+    const onResize = () => setIsWide(window.innerWidth >= 900)
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [])
 
   const goTo = (idx: number, d: 1 | -1) => {
     if (transitioning || idx === current) return
@@ -340,6 +375,57 @@ function View1({ onVerCartera }: { onVerCartera: () => void }) {
           boxSizing: 'border-box',
         }}
       >
+        {/* Peeks laterales (efecto "coverflow"): muestran de reojo el dashboard
+            anterior/siguiente en el espacio en blanco a los costados. Solo se
+            muestran los vecinos inmediatos (offset ±1) y solo en pantallas anchas. */}
+        {isWide &&
+          DASHBOARDS.map((d, i) => {
+            const offset = relOffset(i, current, DASHBOARDS.length)
+            if (Math.abs(offset) !== 1) return null
+            const side: 1 | -1 = offset > 0 ? 1 : -1
+
+            return (
+              <button
+                key={`peek-${i}`}
+                onClick={() => goTo(i, side)}
+                aria-label={`Ir a ${d.title}`}
+                title={d.title}
+                style={{
+                  position: 'absolute',
+                  top: '50%',
+                  left: '50%',
+                  width:
+                    'min(calc(56% - 40px), calc((100dvh - 199px) * 1992 / 1152 * 0.72))',
+                  aspectRatio: '1992 / 1152',
+                  transform: `translate(calc(-50% + ${side * 78}%), -50%) scale(0.84)`,
+                  background: C.white,
+                  border: `1px solid ${C.border}`,
+                  borderRadius: '10px',
+                  overflow: 'hidden',
+                  boxSizing: 'border-box',
+                  boxShadow: '0 8px 24px rgba(13,43,94,.10)',
+                  padding: 0,
+                  cursor: 'pointer',
+                  opacity: transitioning ? 0 : 0.45,
+                  zIndex: 2,
+                  transition: 'opacity .22s ease, transform .22s ease',
+                }}
+              >
+                <img
+                  src={d.preview}
+                  alt=""
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    display: 'block',
+                    objectFit: 'fill',
+                    filter: 'saturate(0.65) brightness(0.98)',
+                  }}
+                />
+              </button>
+            )
+          })}
+
         {/* Flecha izquierda */}
         <button
           onClick={prev}
@@ -393,6 +479,7 @@ function View1({ onVerCartera }: { onVerCartera: () => void }) {
             flexDirection: 'column',
             alignItems: 'stretch',
             boxSizing: 'border-box',
+            zIndex: 4,
           }}
         >
           {/* Marco de la imagen: EXACTAMENTE 1992 × 1152 */}
@@ -923,6 +1010,77 @@ const thBtnStyle: React.CSSProperties = {
   display: 'flex', alignItems: 'center',
 }
 
+// ── Modal de Contraseña (desbloquear edición) ───────────────────────────────
+function PasswordModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: () => void }) {
+  const [value, setValue] = useState('')
+  const [error, setError] = useState(false)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    inputRef.current?.focus()
+  }, [])
+
+  const EDIT_PASSWORD = import.meta.env.VITE_EDIT_PASSWORD || ''
+
+  const attempt = () => {
+    if (EDIT_PASSWORD !== '' && value === EDIT_PASSWORD) {
+      onSuccess()
+    } else {
+      setError(true)
+      setValue('')
+    }
+  }
+
+  return (
+    <>
+      <div
+        onClick={onClose}
+        style={{ position: 'fixed', inset: 0, background: 'rgba(13,43,94,0.45)', zIndex: 200, backdropFilter: 'blur(3px)' }}
+      />
+      <div
+        style={{
+          position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', zIndex: 201,
+          width: 'min(340px, 90vw)', background: C.bg, border: `1px solid ${C.border}`,
+          borderRadius: '14px', boxShadow: '0 20px 60px rgba(13,43,94,0.22)', padding: '22px',
+          boxSizing: 'border-box',
+        }}
+      >
+        <div style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: '15px', color: C.navy, marginBottom: '4px' }}>
+          Desbloquear edición
+        </div>
+        <div style={{ fontFamily: 'Inter, sans-serif', fontSize: '12px', color: C.textSoft, marginBottom: '14px' }}>
+          Ingresa la contraseña para poder editar los registros.
+        </div>
+
+        <input
+          ref={inputRef}
+          type="password"
+          value={value}
+          onChange={e => { setValue(e.target.value); setError(false) }}
+          onKeyDown={e => { if (e.key === 'Enter') attempt() }}
+          placeholder="Contraseña"
+          style={{
+            width: '100%', boxSizing: 'border-box', padding: '9px 12px',
+            background: C.white, border: `1px solid ${error ? C.s5 : C.celeste}`,
+            borderRadius: '6px', color: C.text, fontFamily: 'Inter, sans-serif', fontSize: '13px', outline: 'none',
+          }}
+        />
+
+        {error && (
+          <div style={{ fontFamily: 'Inter, sans-serif', fontSize: '11px', color: C.s5, marginTop: '6px' }}>
+            Contraseña incorrecta. Intenta de nuevo.
+          </div>
+        )}
+
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '18px' }}>
+          <Btn color={C.textMid} border={C.border} bg={C.white} onClick={onClose}>Cancelar</Btn>
+          <Btn color="#fff" border={C.blue1} bg={C.blue1} onClick={attempt}>Ingresar</Btn>
+        </div>
+      </div>
+    </>
+  )
+}
+
 // ── Componente Colapsable ───────────────────────────────────────────────────
 function Section({ title, accent, children, defaultOpen = false }: {
   title: string; accent: string; children: React.ReactNode; defaultOpen?: boolean
@@ -1071,10 +1229,14 @@ function Btn({ color, border, bg, onClick, children }: {
 // ── Modal Detalle del Cliente ────────────────────────────────────────────────
 function ClientModal({
   client,
+  canEdit,
+  onRequestUnlock,
   onClose,
   onSaved,
 }: {
   client: any;
+  canEdit: boolean;
+  onRequestUnlock: () => void;
   onClose: () => void;
   onSaved: (updatedClient: any) => void;
 }) {
@@ -1242,23 +1404,31 @@ function ClientModal({
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
-            <Btn color="#fff" border={C.s5} bg={C.s5} onClick={handleCancel}>Reestablecer</Btn>
-            <Btn
-              color="#fff"
-              border={isEdit ? C.s2 : C.blue1}
-              bg={isEdit ? C.s2 : C.blue1}
-              onClick={() => {
-                if (isEdit) {
-                  handleCancel()
-                } else {
-                  setEditData({ ...client })
-                  setIsEdit(true)
-                }
-              }}
-            >
-              {isEdit ? 'Cancelar' : 'Editar'}
-            </Btn>
-            {isEdit && (
+            {canEdit && isEdit && (
+              <Btn color="#fff" border={C.s5} bg={C.s5} onClick={handleCancel}>Reestablecer</Btn>
+            )}
+            {canEdit ? (
+              <Btn
+                color="#fff"
+                border={isEdit ? C.s2 : C.blue1}
+                bg={isEdit ? C.s2 : C.blue1}
+                onClick={() => {
+                  if (isEdit) {
+                    handleCancel()
+                  } else {
+                    setEditData({ ...client })
+                    setIsEdit(true)
+                  }
+                }}
+              >
+                {isEdit ? 'Cancelar' : 'Editar'}
+              </Btn>
+            ) : (
+              <Btn color={C.textSoft} border={C.border} bg={C.white} onClick={onRequestUnlock}>
+                🔒 Editar
+              </Btn>
+            )}
+            {canEdit && isEdit && (
               <Btn color="#fff" border={C.s1} bg={C.s1} onClick={handleSave}>
                 {saving ? 'Guardando...' : 'Guardar'}
               </Btn>
@@ -1384,6 +1554,16 @@ export default function App() {
   const [selected, setSelected] = useState<any | null>(null)
   const [clients, setClients] = useState<any[]>([])
   const [loading, setLoading] = useState<boolean>(true)
+  const [isUnlocked, setIsUnlocked] = useState(false)
+  const [showPasswordModal, setShowPasswordModal] = useState(false)
+
+  const handleLockClick = () => {
+    if (isUnlocked) {
+      setIsUnlocked(false)
+    } else {
+      setShowPasswordModal(true)
+    }
+  }
 
   // La vista de dashboards funciona como una pantalla completa:
   // no permite que el documento cree scroll vertical u horizontal.
@@ -1469,7 +1649,11 @@ export default function App() {
         overflow: 'hidden',
       }}
     >
-      <Header onLogoClick={() => { setView('dashboard'); setSelected(null) }} />
+      <Header
+        onLogoClick={() => { setView('dashboard'); setSelected(null) }}
+        isUnlocked={isUnlocked}
+        onLockClick={handleLockClick}
+      />
       <main
         style={{
           flex: '1 1 auto',
@@ -1492,6 +1676,8 @@ export default function App() {
       {selected && (
         <ClientModal
           client={selected}
+          canEdit={isUnlocked}
+          onRequestUnlock={() => setShowPasswordModal(true)}
           onClose={() => setSelected(null)}
           onSaved={(updatedClient) => {
             setClients(prev =>
@@ -1500,6 +1686,15 @@ export default function App() {
               )
             )
             setSelected(updatedClient)
+          }}
+        />
+      )}
+      {showPasswordModal && (
+        <PasswordModal
+          onClose={() => setShowPasswordModal(false)}
+          onSuccess={() => {
+            setIsUnlocked(true)
+            setShowPasswordModal(false)
           }}
         />
       )}
