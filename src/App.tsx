@@ -1056,7 +1056,7 @@ function PasswordModal({ onClose, onSuccess }: { onClose: () => void; onSuccess:
           Desbloquear edición
         </div>
         <div style={{ fontFamily: 'Inter, sans-serif', fontSize: '12px', color: C.textSoft, marginBottom: '14px' }}>
-          Ingresa la contraseña para poder editar.
+          Ingresa la contraseña para poder editar los registros.
         </div>
 
         <input
@@ -1167,8 +1167,12 @@ function Grid({ cols = 3, children }: { cols?: number; children: React.ReactNode
   )
 }
 
-// ── Seguimiento: tabla editable con adjuntos, persistida en Supabase ────────
-const SEGUIMIENTO_BUCKET = 'seguimiento-adjuntos'
+// ── Seguimiento: tabla editable con links de Outlook, persistida en Supabase ─
+// No se sube ningún archivo a ningún almacenamiento: el equipo entero tiene
+// acceso al buzón compartido solicitudescarteradirecta@mivivienda.com.pe, así
+// que basta con pegar el "Copiar vínculo" de Outlook a cada correo — el link
+// abre el correo real en Outlook para cualquiera del equipo con acceso a ese
+// buzón. Cero costo de almacenamiento, sin importar cuántos correos se enlacen.
 
 type SeguimientoRow = {
   id: string
@@ -1181,15 +1185,6 @@ type SeguimientoRow = {
   respuesta_archivo_nombre: string | null
   respuesta_archivo_url: string | null
   created_at?: string
-}
-
-function IconPencilSmall({ size = 10, color = C.textSoft }: { size?: number; color?: string }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12 20h9" />
-      <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
-    </svg>
-  )
 }
 
 function IconTrash({ size = 13, color = C.s5 }: { size?: number; color?: string }) {
@@ -1234,31 +1229,38 @@ const seguimientoDateStyle: React.CSSProperties = {
 }
 
 function AttachmentField({
-  fileName,
-  fileUrl,
+  url,
   disabled,
   canEdit,
   color,
-  showName,
-  onUpload,
+  showUrl,
+  onSetUrl,
 }: {
-  fileName: string | null
-  fileUrl: string | null
+  url: string | null
   disabled: boolean
   canEdit: boolean
   color: string
-  showName: boolean
-  onUpload: (file: File) => void
+  showUrl: boolean
+  onSetUrl: (url: string) => void
 }) {
-  const inputRef = useRef<HTMLInputElement>(null)
-  const canUpload = canEdit && !disabled
+  const [draft, setDraft] = useState(url || '')
+
+  // Si el link cambia desde afuera (ej. se cargó de Supabase), sincroniza el input
+  useEffect(() => {
+    setDraft(url || '')
+  }, [url])
+
+  const canType = canEdit && !disabled
 
   const handleIconClick = () => {
-    if (disabled) return
-    if (fileUrl) {
-      window.open(fileUrl, '_blank', 'noopener,noreferrer')
-    } else if (canUpload) {
-      inputRef.current?.click()
+    if (disabled || !url) return
+    window.open(url, '_blank', 'noopener,noreferrer')
+  }
+
+  const commit = () => {
+    const trimmed = draft.trim()
+    if (trimmed !== (url || '')) {
+      onSetUrl(trimmed)
     }
   }
 
@@ -1267,55 +1269,44 @@ function AttachmentField({
       <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
         <button
           onClick={handleIconClick}
-          disabled={disabled}
-          title={fileUrl ? (fileName || 'Ver adjunto') : canUpload ? 'Adjuntar documento' : 'Sin adjunto'}
+          disabled={disabled || !url}
+          title={url ? 'Abrir correo en Outlook' : canType ? 'Pega aquí el link del correo' : 'Sin correo enlazado'}
           style={{
             background: 'none', border: 'none', padding: 0, margin: 0,
-            cursor: disabled ? 'default' : 'pointer',
+            cursor: disabled || !url ? 'default' : 'pointer',
             opacity: disabled ? 0.35 : 1,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
           }}
         >
-          <IconMail size={16} color={fileUrl ? color : C.textSoft} />
+          <IconMail size={16} color={url ? color : C.textSoft} />
         </button>
 
-        {canUpload && fileUrl && (
-          <button
-            onClick={() => inputRef.current?.click()}
-            title="Reemplazar adjunto"
-            style={{
-              background: C.white, border: `1px solid ${C.border}`, borderRadius: '4px',
-              width: '16px', height: '16px', padding: 0, display: 'flex',
-              alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0,
-            }}
-          >
-            <IconPencilSmall />
-          </button>
-        )}
-
-        {canUpload && (
+        {canType && (
           <input
-            ref={inputRef}
-            type="file"
-            onChange={e => {
-              const f = e.target.files?.[0]
-              if (f) onUpload(f)
-              e.target.value = ''
+            value={draft}
+            onChange={e => setDraft(e.target.value)}
+            onBlur={commit}
+            onKeyDown={e => { if (e.key === 'Enter') (e.currentTarget as HTMLInputElement).blur() }}
+            placeholder="Pegar link de Outlook..."
+            style={{
+              flex: '1 1 auto', minWidth: 0, boxSizing: 'border-box',
+              background: C.white, border: `1px solid ${C.border}`, borderRadius: '4px',
+              padding: '4px 6px', fontFamily: 'Inter, sans-serif', fontSize: '10px',
+              color: C.textMid, outline: 'none',
             }}
-            style={{ display: 'none' }}
           />
         )}
       </div>
 
-      {showName && (
+      {showUrl && !canType && (
         <span
-          title={fileName || ''}
+          title={url || ''}
           style={{
             fontFamily: 'Inter, sans-serif', fontSize: '10px', color: C.textSoft,
             whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%',
           }}
         >
-          {fileName || (canUpload ? 'Sin adjuntar' : '—')}
+          {url || '—'}
         </span>
       )}
     </div>
@@ -1337,21 +1328,6 @@ function SeguimientoRowView({
 }) {
   const isRespondido = row.estado_respuesta === 'respondido'
 
-  const uploadFile = async (file: File, field: 'correo' | 'respuesta') => {
-    try {
-      const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_')
-      const path = `${row.client_id}/${row.id}/${field}-${Date.now()}-${safeName}`
-      const { error: upErr } = await supabase.storage.from(SEGUIMIENTO_BUCKET).upload(path, file, { upsert: true })
-      if (upErr) throw upErr
-      const { data } = supabase.storage.from(SEGUIMIENTO_BUCKET).getPublicUrl(path)
-      onChange(row.id, field === 'correo'
-        ? { correo_archivo_nombre: file.name, correo_archivo_url: data.publicUrl }
-        : { respuesta_archivo_nombre: file.name, respuesta_archivo_url: data.publicUrl })
-    } catch (err: any) {
-      alert(`No se pudo subir el archivo.\n\n${err?.message || 'Error desconocido'}`)
-    }
-  }
-
   return (
     <div style={{
       display: 'grid', gridTemplateColumns: seguimientoGridCols, gap: '0 10px', alignItems: 'center',
@@ -1366,13 +1342,12 @@ function SeguimientoRowView({
       />
 
       <AttachmentField
-        fileName={row.correo_archivo_nombre}
-        fileUrl={row.correo_archivo_url}
+        url={row.correo_archivo_url}
         disabled={false}
         canEdit={canEdit}
         color={C.celeste}
-        showName
-        onUpload={f => uploadFile(f, 'correo')}
+        showUrl
+        onSetUrl={url => onChange(row.id, { correo_archivo_url: url || null })}
       />
 
       <select
@@ -1400,13 +1375,12 @@ function SeguimientoRowView({
       />
 
       <AttachmentField
-        fileName={row.respuesta_archivo_nombre}
-        fileUrl={row.respuesta_archivo_url}
+        url={row.respuesta_archivo_url}
         disabled={!isRespondido}
         canEdit={canEdit}
         color={C.s6}
-        showName={false}
-        onUpload={f => uploadFile(f, 'respuesta')}
+        showUrl={false}
+        onSetUrl={url => onChange(row.id, { respuesta_archivo_url: url || null })}
       />
 
       {/* Eliminar flujo — solo visible con edición desbloqueada */}
@@ -1794,7 +1768,7 @@ function ClientModal({
               </Btn>
             ) : (
               <Btn color={C.textSoft} border={C.border} bg={C.white} onClick={onRequestUnlock}>
-                Editar
+                🔒 Editar
               </Btn>
             )}
             {canEdit && isEdit && (
