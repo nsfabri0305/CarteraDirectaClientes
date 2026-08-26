@@ -1056,7 +1056,7 @@ function PasswordModal({ onClose, onSuccess }: { onClose: () => void; onSuccess:
           Desbloquear edición
         </div>
         <div style={{ fontFamily: 'Inter, sans-serif', fontSize: '12px', color: C.textSoft, marginBottom: '14px' }}>
-          Ingresa la contraseña para poder editar los registros.
+          Ingresa la contraseña para poder editar.
         </div>
 
         <input
@@ -1794,7 +1794,7 @@ function ClientModal({
               </Btn>
             ) : (
               <Btn color={C.textSoft} border={C.border} bg={C.white} onClick={onRequestUnlock}>
-                🔒 Editar
+                Editar
               </Btn>
             )}
             {canEdit && isEdit && (
