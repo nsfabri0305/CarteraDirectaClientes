@@ -1192,17 +1192,30 @@ function IconPencilSmall({ size = 10, color = C.textSoft }: { size?: number; col
   )
 }
 
-const seguimientoGridCols = '112px minmax(150px,1.5fr) 138px 112px 52px'
+function IconTrash({ size = 13, color = C.s5 }: { size?: number; color?: string }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 6h18" />
+      <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+      <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+      <path d="M10 11v6" />
+      <path d="M14 11v6" />
+    </svg>
+  )
+}
+
+// Columnas: Fecha Correo | Correo Cliente | Estado | Fecha Respuesta | Respuesta | Eliminar
+const seguimientoGridCols = '112px minmax(150px,1.5fr) 138px 112px 52px 32px'
 
 function SeguimientoTableHead() {
-  const headers = ['Fecha Correo', 'Correo Cliente', 'Estado de Respuesta', 'Fecha Respuesta', 'Respuesta']
+  const headers = ['Fecha Correo', 'Correo Cliente', 'Estado de Respuesta', 'Fecha Respuesta', 'Respuesta', '']
   return (
     <div style={{
       display: 'grid', gridTemplateColumns: seguimientoGridCols, gap: '0 10px',
       padding: '8px 12px', background: C.navy, borderRadius: '6px 6px 0 0',
     }}>
-      {headers.map(h => (
-        <span key={h} style={{
+      {headers.map((h, i) => (
+        <span key={i} style={{
           fontFamily: 'JetBrains Mono, monospace', fontSize: '9px',
           letterSpacing: '0.08em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.8)',
           whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
@@ -1314,11 +1327,13 @@ function SeguimientoRowView({
   canEdit,
   highlight = false,
   onChange,
+  onDelete,
 }: {
   row: SeguimientoRow
   canEdit: boolean
   highlight?: boolean
   onChange: (id: string, patch: Partial<SeguimientoRow>) => void
+  onDelete: (id: string) => void
 }) {
   const isRespondido = row.estado_respuesta === 'respondido'
 
@@ -1393,6 +1408,25 @@ function SeguimientoRowView({
         showName={false}
         onUpload={f => uploadFile(f, 'respuesta')}
       />
+
+      {/* Eliminar flujo — solo visible con edición desbloqueada */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        {canEdit && (
+          <button
+            onClick={() => onDelete(row.id)}
+            title="Eliminar este registro de seguimiento"
+            style={{
+              background: 'none', border: 'none', padding: '4px', margin: 0,
+              cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              borderRadius: '4px',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = `${C.s5}18` }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
+          >
+            <IconTrash />
+          </button>
+        )}
+      </div>
     </div>
   )
 }
@@ -1446,6 +1480,19 @@ function SeguimientoManager({ clientId, canEdit }: { clientId: string | number; 
       console.error('Error al guardar seguimiento:', error)
       alert(`No se pudo guardar el cambio.\n\n${error.message}`)
     }
+  }
+
+  const deleteRow = async (id: string) => {
+    if (!window.confirm('¿Eliminar este registro de seguimiento? Esta acción no se puede deshacer.')) return
+
+    const { error } = await supabase.from('seguimientos').delete().eq('id', id)
+    if (error) {
+      console.error('Error al eliminar seguimiento:', error)
+      alert(`No se pudo eliminar el registro.\n\n${error.message}`)
+      return
+    }
+
+    setRows(prev => prev.filter(r => r.id !== id))
   }
 
   const handleCreate = async () => {
@@ -1503,7 +1550,7 @@ function SeguimientoManager({ clientId, canEdit }: { clientId: string | number; 
             Sin registros de seguimiento todavía.
           </div>
         ) : (
-          <SeguimientoRowView row={latest} canEdit={canEdit} onChange={updateRow} highlight />
+          <SeguimientoRowView row={latest} canEdit={canEdit} onChange={updateRow} onDelete={deleteRow} highlight />
         )}
       </div>
 
@@ -1528,7 +1575,7 @@ function SeguimientoManager({ clientId, canEdit }: { clientId: string | number; 
             <div style={{ marginTop: '10px', border: `1px solid ${C.border}`, borderRadius: '8px', overflow: 'hidden' }}>
               <SeguimientoTableHead />
               {rest.map(r => (
-                <SeguimientoRowView key={r.id} row={r} canEdit={canEdit} onChange={updateRow} />
+                <SeguimientoRowView key={r.id} row={r} canEdit={canEdit} onChange={updateRow} onDelete={deleteRow} />
               ))}
             </div>
           )}
