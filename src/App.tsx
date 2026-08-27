@@ -126,34 +126,22 @@ function abrirCorreoLevantamientoHipoteca(
   const asunto =
     `LEVANTAMIENTO DE HIPOTECA / ${nombreCliente} / DNI (${dniCliente})`
 
-  const cuerpo = `Estimado/a ${nombreCliente}:
-
-${saludo}
-
-El motivo del presente es para informarle que ya se cuenta con su minuta de levantamiento de hipoteca. Por ello, solicitamos su apoyo para remitirnos la dirección exacta de su domicilio según los siguientes criterios:
-
-- Dirección
-- Distrito
-- Provincia
-- Departamento
-- Referencia
-- Número de teléfono
-
-Con esta información, procederemos a enviar su minuta a través del Courier.
-Además, si prefiere recoger el documento en nuestras oficinas (ubicadas en Lima - San Isidro), le pedimos que responda a este correo indicando su preferencia para coordinar el proceso de entrega.
-
-Quedamos atentos a su respuesta lo antes posible.
-
-Saludos cordiales,`
+  // Cuerpo en texto plano con saltos de línea para Outlook
+  const cuerpo = `Estimado/a ${nombreCliente}:\n\n${saludo}\n\nEl motivo del presente es para informarle que ya se cuenta con su minuta de levantamiento de hipoteca. Por ello, solicitamos su apoyo para remitirnos la dirección exacta de su domicilio según los siguientes criterios:\n\n- Dirección\n- Distrito\n- Provincia\n- Departamento\n- Referencia\n- Número de teléfono\n\nCon esta información, procederemos a enviar su minuta a través del Courier.\nAdemás, si prefiere recoger el documento en nuestras oficinas (ubicadas en Lima - San Isidro), le pedimos que responda a este correo indicando su preferencia para coordinar el proceso de entrega.\n\nQuedamos atentos a su respuesta lo antes posible.\n\nSaludos cordiales,`
 
   const cc = 'solicitudescarteradirecta@mivivienda.com.pe'
 
-  // Construir el mailto completo
-  const mailtoUri = `mailto:${encodeURIComponent(destinatario)}?cc=${encodeURIComponent(cc)}&subject=${encodeURIComponent(asunto)}&body=${encodeURIComponent(cuerpo)}`
+  // Construir el mailto completo con texto plano
+  const mailtoUri = `mailto:${destinatario}?cc=${cc}&subject=${encodeURIComponent(asunto)}&body=${encodeURIComponent(cuerpo)}`
 
-  // Construir la URL de Outlook Web con el mailto completo
-  const outlookUrl = `https://outlook.office.com/mail/deeplink/compose?mailtouri=${encodeURIComponent(mailtoUri)}`
+  // Construir la URL de Outlook Web
+  // Usamos mailtouri con el mailto completo y agregamos parámetros para evitar firma
+  const outlookUrl = `https://outlook.office.com/mail/deeplink/compose` +
+    `?mailtouri=${encodeURIComponent(mailtoUri)}` +
+    `&ispopout=1` +
+    `&path=/mail/action/compose`
 
+  // Abrir en nueva ventana
   window.open(outlookUrl, '_blank', 'noopener,noreferrer')
 }
 
@@ -2033,18 +2021,23 @@ function ClientModal({
                 onClick={(e) => {
                   e.stopPropagation()
 
+                  if (!canEdit) {
+                    onRequestUnlock()
+                    return
+                  }
+
                   abrirCorreoLevantamientoHipoteca(
                     nombre,
                     dni,
                     emailCliente
                   )
                 }}
-                title="Abrir correo de levantamiento de hipoteca"
+                title={canEdit ? 'Abrir correo de levantamiento de hipoteca' : 'Necesitas desbloquear para enviar correo'}
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: '6px',
-                  background: C.blue1,
+                  background: canEdit ? C.blue1 : C.textSoft,
                   border: 'none',
                   borderRadius: '6px',
                   color: '#fff',
@@ -2052,8 +2045,9 @@ function ClientModal({
                   fontWeight: 600,
                   fontSize: '10px',
                   padding: '6px 10px',
-                  cursor: 'pointer',
+                  cursor: canEdit ? 'pointer' : 'not-allowed',
                   whiteSpace: 'nowrap',
+                  opacity: canEdit ? 1 : 0.7,
                 }}
               >
                 <IconMail size={14} color="#fff" />
