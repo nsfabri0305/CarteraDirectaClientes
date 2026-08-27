@@ -148,26 +148,11 @@ Saludos cordiales,`
 
   const cc = 'solicitudescarteradirecta@mivivienda.com.pe'
 
-  /*
-    Se utiliza el mismo formato de Outlook Web que comprobaste manualmente:
-    
-    https://outlook.office.com/mail/deeplink/compose
-      ?mailtouri=mailto:...
-      ?cc=...
-      &subject=...
-      &body=...
+  // Construir el mailto completo
+  const mailtoUri = `mailto:${encodeURIComponent(destinatario)}?cc=${encodeURIComponent(cc)}&subject=${encodeURIComponent(asunto)}&body=${encodeURIComponent(cuerpo)}`
 
-    El parámetro mailtouri es el que permite que Outlook Web
-    utilice la dirección de solicitudescarteradirecta.
-  */
-  const mailtoUri =
-    `mailto:${encodeURIComponent(destinatario)}?cc=${encodeURIComponent(cc)}`
-
-  const outlookUrl =
-    `https://outlook.office.com/mail/deeplink/compose` +
-    `?mailtouri=${mailtoUri}` +
-    `&subject=${encodeURIComponent(asunto)}` +
-    `&body=${encodeURIComponent(cuerpo)}`
+  // Construir la URL de Outlook Web con el mailto completo
+  const outlookUrl = `https://outlook.office.com/mail/deeplink/compose?mailtouri=${encodeURIComponent(mailtoUri)}`
 
   window.open(outlookUrl, '_blank', 'noopener,noreferrer')
 }
