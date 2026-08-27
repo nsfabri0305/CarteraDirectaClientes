@@ -1368,19 +1368,22 @@ function Grid({ cols = 3, children }: { cols?: number; children: React.ReactNode
   )
 }
 
-// ── Modal para gestionar link ────────────────────────────────────────────────
+// ── Modal para gestionar link y asunto ───────────────────────────────────────
 function LinkModal({ 
   title, 
   url, 
+  asunto,
   onSave, 
   onClose 
 }: { 
   title: string; 
   url: string | null; 
-  onSave: (url: string) => void; 
+  asunto: string | null;
+  onSave: (url: string, asunto: string) => void; 
   onClose: () => void 
 }) {
-  const [draft, setDraft] = useState(url || '')
+  const [draftUrl, setDraftUrl] = useState(url || '')
+  const [draftAsunto, setDraftAsunto] = useState(asunto || '')
 
   return (
     <>
@@ -1401,21 +1404,41 @@ function LinkModal({
           {title}
         </div>
 
-        <div style={{ fontFamily: 'Inter, sans-serif', fontSize: '12px', color: C.textSoft, marginBottom: '14px' }}>
-          Pega el link del correo de Outlook aquí:
-        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '14px' }}>
+          <div>
+            <div style={{ fontFamily: 'Inter, sans-serif', fontSize: '12px', color: C.textSoft, marginBottom: '6px' }}>
+              Asunto del correo:
+            </div>
+            <input
+              type="text"
+              value={draftAsunto}
+              onChange={e => setDraftAsunto(e.target.value)}
+              placeholder="Ej: Envío de CNA"
+              style={{
+                width: '100%', boxSizing: 'border-box', padding: '9px 12px',
+                background: C.white, border: `1px solid ${C.celeste}`,
+                borderRadius: '6px', color: C.text, fontFamily: 'Inter, sans-serif', fontSize: '13px', outline: 'none',
+              }}
+            />
+          </div>
 
-        <input
-          type="text"
-          value={draft}
-          onChange={e => setDraft(e.target.value)}
-          placeholder="https://outlook.office.com/..."
-          style={{
-            width: '100%', boxSizing: 'border-box', padding: '9px 12px',
-            background: C.white, border: `1px solid ${C.celeste}`,
-            borderRadius: '6px', color: C.text, fontFamily: 'Inter, sans-serif', fontSize: '13px', outline: 'none',
-          }}
-        />
+          <div>
+            <div style={{ fontFamily: 'Inter, sans-serif', fontSize: '12px', color: C.textSoft, marginBottom: '6px' }}>
+              Link del correo:
+            </div>
+            <input
+              type="text"
+              value={draftUrl}
+              onChange={e => setDraftUrl(e.target.value)}
+              placeholder="https://outlook.office.com/..."
+              style={{
+                width: '100%', boxSizing: 'border-box', padding: '9px 12px',
+                background: C.white, border: `1px solid ${C.celeste}`,
+                borderRadius: '6px', color: C.text, fontFamily: 'Inter, sans-serif', fontSize: '13px', outline: 'none',
+              }}
+            />
+          </div>
+        </div>
 
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '18px' }}>
           <Btn color={C.textMid} border={C.border} bg={C.white} onClick={onClose}>Cancelar</Btn>
@@ -1423,7 +1446,7 @@ function LinkModal({
             color="#fff" 
             border={C.blue1} 
             bg={C.blue1} 
-            onClick={() => { onSave(draft.trim()); onClose(); }}
+            onClick={() => { onSave(draftUrl.trim(), draftAsunto.trim()); onClose(); }}
           >
             Guardar
           </Btn>
@@ -1447,7 +1470,7 @@ type SeguimientoRow = {
   created_at?: string
 }
 
-const seguimientoGridCols = '112px minmax(80px,1fr) 138px 112px 52px 32px'
+const seguimientoGridCols = '112px minmax(120px,1.2fr) 138px 112px 52px 32px'
 
 function SeguimientoTableHead({ showActions }: { showActions: boolean }) {
   const headers = ['Fecha Correo', 'Correo', 'Estado', 'Fecha Resp.', 'Respuesta', showActions ? 'Acción' : '']
@@ -1476,8 +1499,9 @@ const seguimientoDateStyle: React.CSSProperties = {
   fontFamily: 'JetBrains Mono, monospace', fontSize: '11px', color: C.textMid, outline: 'none',
 }
 
-function AttachmentIcon({
+function AttachmentDisplay({
   url,
+  asunto,
   disabled,
   color,
   canEdit,
@@ -1485,6 +1509,7 @@ function AttachmentIcon({
   onEdit,
 }: {
   url: string | null
+  asunto: string | null
   disabled: boolean
   color: string
   canEdit: boolean
@@ -1496,21 +1521,36 @@ function AttachmentIcon({
       <button
         onClick={onClick}
         disabled={disabled || !url}
-        title={url ? 'Abrir correo en Outlook' : canEdit ? 'Agregar link del correo' : 'Sin correo enlazado'}
+        title={url ? (asunto || 'Abrir correo en Outlook') : canEdit ? 'Agregar link del correo' : 'Sin correo enlazado'}
         style={{
           background: 'none', border: 'none', padding: 0, margin: 0,
           cursor: disabled || !url ? 'default' : 'pointer',
           opacity: disabled ? 0.35 : 1,
           display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+          gap: '6px',
         }}
       >
         <IconMail size={16} color={url ? color : C.textSoft} />
+        
+        {asunto && (
+          <span style={{
+            fontSize: '10px',
+            color: C.textMid,
+            fontFamily: 'Inter, sans-serif',
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            maxWidth: '80px',
+          }}>
+            {asunto}
+          </span>
+        )}
       </button>
 
       {canEdit && (
         <button
           onClick={onEdit}
-          title="Editar link del correo"
+          title="Editar link y asunto del correo"
           style={{
             background: 'none', border: 'none', padding: '2px', margin: 0,
             cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -1555,8 +1595,9 @@ function SeguimientoRowView({
         style={{ ...seguimientoDateStyle, opacity: canEdit ? 1 : 0.75 }}
       />
 
-      <AttachmentIcon
+      <AttachmentDisplay
         url={row.correo_archivo_url}
+        asunto={row.correo_archivo_nombre}
         disabled={false}
         color={C.celeste}
         canEdit={canEdit}
@@ -1588,8 +1629,9 @@ function SeguimientoRowView({
         style={{ ...seguimientoDateStyle, opacity: canEdit && isRespondido ? 1 : 0.45 }}
       />
 
-      <AttachmentIcon
+      <AttachmentDisplay
         url={row.respuesta_archivo_url}
+        asunto={row.respuesta_archivo_nombre}
         disabled={!isRespondido}
         color={C.s6}
         canEdit={canEdit}
@@ -1617,18 +1659,26 @@ function SeguimientoRowView({
 
       {showLinkModal === 'correo' && (
         <LinkModal
-          title="Link del Correo"
+          title="Correo del Cliente"
           url={row.correo_archivo_url}
-          onSave={(url) => onChange(row.id, { correo_archivo_url: url || null })}
+          asunto={row.correo_archivo_nombre}
+          onSave={(url, asunto) => onChange(row.id, { 
+            correo_archivo_url: url || null,
+            correo_archivo_nombre: asunto || null
+          })}
           onClose={() => setShowLinkModal(null)}
         />
       )}
 
       {showLinkModal === 'respuesta' && (
         <LinkModal
-          title="Link de la Respuesta"
+          title="Respuesta del Cliente"
           url={row.respuesta_archivo_url}
-          onSave={(url) => onChange(row.id, { respuesta_archivo_url: url || null })}
+          asunto={row.respuesta_archivo_nombre}
+          onSave={(url, asunto) => onChange(row.id, { 
+            respuesta_archivo_url: url || null,
+            respuesta_archivo_nombre: asunto || null
+          })}
           onClose={() => setShowLinkModal(null)}
         />
       )}
