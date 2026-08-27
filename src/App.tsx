@@ -126,46 +126,36 @@ function abrirCorreoLevantamientoHipoteca(
   const asunto =
     `LEVANTAMIENTO DE HIPOTECA / ${nombreCliente} / DNI (${dniCliente})`
 
-  // Cuerpo HTML con Aptos 11pt
-  const cuerpoHTML = `<html><head><style>
-    body { font-family: 'Aptos', 'Aptos Display', sans-serif !important; font-size: 11pt !important; }
-    p { font-family: 'Aptos', 'Aptos Display', sans-serif !important; font-size: 11pt !important; margin: 0 0 10px 0; }
-    ul { font-family: 'Aptos', 'Aptos Display', sans-serif !important; font-size: 11pt !important; margin: 0 0 10px 20px; padding: 0; }
-    li { font-family: 'Aptos', 'Aptos Display', sans-serif !important; font-size: 11pt !important; margin: 0 0 5px 0; }
-  </style></head><body>
-    <p>Estimado/a ${nombreCliente}:</p>
-    
-    <p>${saludo}</p>
-    
-    <p>El motivo del presente es para informarle que ya se cuenta con su minuta de levantamiento de hipoteca. Por ello, solicitamos su apoyo para remitirnos la dirección exacta de su domicilio según los siguientes criterios:</p>
-    
-    <ul>
-      <li>Dirección</li>
-      <li>Distrito</li>
-      <li>Provincia</li>
-      <li>Departamento</li>
-      <li>Referencia</li>
-      <li>Número de teléfono</li>
-    </ul>
-    
-    <p>Con esta información, procederemos a enviar su minuta a través del Courier.<br>
-    Además, si prefiere recoger el documento en nuestras oficinas (ubicadas en Lima - San Isidro), le pedimos que responda a este correo indicando su preferencia para coordinar el proceso de entrega.</p>
-    
-    <p>Quedamos atentos a su respuesta lo antes posible.</p>
-    
-    <p style="margin: 0;">Saludos cordiales,</p>
-  </body></html>`
+  // Cuerpo del correo en texto plano
+  const cuerpo = `Estimado/a ${nombreCliente}:
+
+${saludo}
+
+El motivo del presente es para informarle que ya se cuenta con su minuta de levantamiento de hipoteca. Por ello, solicitamos su apoyo para remitirnos la dirección exacta de su domicilio según los siguientes criterios:
+
+- Dirección
+- Distrito
+- Provincia
+- Departamento
+- Referencia
+- Número de teléfono
+
+Con esta información, procederemos a enviar su minuta a través del Courier.
+Además, si prefiere recoger el documento en nuestras oficinas (ubicadas en Lima - San Isidro), le pedimos que responda a este correo indicando su preferencia para coordinar el proceso de entrega.
+
+Quedamos atentos a su respuesta lo antes posible.
+
+Saludos cordiales,`
 
   const cc = 'solicitudescarteradirecta@mivivienda.com.pe'
 
-  // Construir el mailto completo con HTML
-  const mailtoUri = `mailto:${destinatario}?cc=${cc}&subject=${encodeURIComponent(asunto)}&body=${encodeURIComponent(cuerpoHTML)}`
+  // Construir el mailto completo con texto plano
+  const mailtoUri = `mailto:${destinatario}?cc=${cc}&subject=${encodeURIComponent(asunto)}&body=${encodeURIComponent(cuerpo)}`
 
   // Construir la URL de Outlook Web
   const outlookUrl = `https://outlook.office.com/mail/deeplink/compose` +
     `?mailtouri=${encodeURIComponent(mailtoUri)}` +
-    `&ispopout=1` +
-    `&path=/mail/action/compose`
+    `&ispopout=1`
 
   // Abrir en nueva ventana
   window.open(outlookUrl, '_blank', 'noopener,noreferrer')
