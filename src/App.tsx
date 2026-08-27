@@ -90,6 +90,88 @@ function getActualKey(obj: any, ...keys: string[]): string | null {
   return null
 }
 
+// ── Correo Levantamiento de Hipoteca ─────────────────────────────────────────
+function abrirCorreoLevantamientoHipoteca(
+  nombre: string,
+  dni: string,
+  email: string
+) {
+  const destinatario = email.trim()
+
+  if (!destinatario || destinatario === '---') {
+    alert('Este cliente no tiene un correo electrónico registrado.')
+    return
+  }
+
+  // Hora actual en Perú
+  const horaPeru = Number(
+    new Intl.DateTimeFormat('es-PE', {
+      timeZone: 'America/Lima',
+      hour: '2-digit',
+      hour12: false,
+    }).format(new Date())
+  )
+
+  let saludo = 'Buenos días,'
+
+  if (horaPeru >= 12 && horaPeru < 19) {
+    saludo = 'Buenas tardes,'
+  } else if (horaPeru >= 19 || horaPeru < 5) {
+    saludo = 'Buenas noches,'
+  }
+
+  const nombreCliente = nombre.trim()
+  const dniCliente = dni.trim()
+
+  const asunto =
+    `LEVANTAMIENTO DE HIPOTECA / ${nombreCliente} / DNI (${dniCliente})`
+
+  const cuerpo = `Estimado/a ${nombreCliente}:
+
+${saludo}
+
+El motivo del presente es para informarle que ya se cuenta con su minuta de levantamiento de hipoteca. Por ello, solicitamos su apoyo para remitirnos la dirección exacta de su domicilio según los siguientes criterios:
+
+- Dirección
+- Distrito
+- Provincia
+- Departamento
+- Referencia
+- Número de teléfono
+
+Con esta información, procederemos a enviar su minuta a través del Courier.
+Además, si prefiere recoger el documento en nuestras oficinas (ubicadas en Lima - San Isidro), le pedimos que responda a este correo indicando su preferencia para coordinar el proceso de entrega.
+
+Quedamos atentos a su respuesta lo antes posible.
+
+Saludos cordiales,`
+
+  const cc = 'solicitudescarteradirecta@mivivienda.com.pe'
+
+  /*
+    Se utiliza el mismo formato de Outlook Web que comprobaste manualmente:
+    
+    https://outlook.office.com/mail/deeplink/compose
+      ?mailtouri=mailto:...
+      ?cc=...
+      &subject=...
+      &body=...
+
+    El parámetro mailtouri es el que permite que Outlook Web
+    utilice la dirección de solicitudescarteradirecta.
+  */
+  const mailtoUri =
+    `mailto:${encodeURIComponent(destinatario)}?cc=${encodeURIComponent(cc)}`
+
+  const outlookUrl =
+    `https://outlook.office.com/mail/deeplink/compose` +
+    `?mailtouri=${mailtoUri}` +
+    `&subject=${encodeURIComponent(asunto)}` +
+    `&body=${encodeURIComponent(cuerpo)}`
+
+  window.open(outlookUrl, '_blank', 'noopener,noreferrer')
+}
+
 // Parsea y formatea el saldo para detectar si es 0 o dinero mayor a 0
 function parseSaldo(val: any): { num: number; formatted: string } {
   if (!val || val === '---') return { num: 0, formatted: 'S/ 0.00' }
@@ -179,8 +261,6 @@ function Header({
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-        {/* Candado: sin contraseña / con contraseña. Click abre el modal de contraseña
-            (o vuelve a bloquear si ya está desbloqueado). */}
         <button
           onClick={onLockClick}
           title={isUnlocked ? 'Edición desbloqueada (clic para bloquear)' : 'Clic para desbloquear la edición'}
@@ -220,7 +300,6 @@ function Header({
         </span>
       </div>
 
-      {/* Logo FMV como imagen. Sigue llevando al inicio, igual que antes. */}
       <button
         onClick={onLogoClick}
         aria-label="Ir al inicio"
@@ -313,7 +392,6 @@ function View1({ onVerCartera }: { onVerCartera: () => void }) {
         overflow: 'hidden',
       }}
     >
-      {/* Encabezado */}
       <div
         style={{
           flex: '0 0 38px',
@@ -367,7 +445,6 @@ function View1({ onVerCartera }: { onVerCartera: () => void }) {
         </div>
       </div>
 
-      {/* Área del dashboard. Todo lo que está aquí cabe en pantalla. */}
       <div
         style={{
           position: 'relative',
@@ -381,9 +458,6 @@ function View1({ onVerCartera }: { onVerCartera: () => void }) {
           boxSizing: 'border-box',
         }}
       >
-        {/* Peeks laterales (efecto "coverflow"): muestran de reojo el dashboard
-            anterior/siguiente en el espacio en blanco a los costados. Solo se
-            muestran los vecinos inmediatos (offset ±1) y solo en pantallas anchas. */}
         {isWide &&
           DASHBOARDS.map((d, i) => {
             const offset = relOffset(i, current, DASHBOARDS.length)
@@ -433,7 +507,6 @@ function View1({ onVerCartera }: { onVerCartera: () => void }) {
             )
           })}
 
-        {/* Flecha izquierda */}
         <button
           onClick={prev}
           aria-label="Dashboard anterior"
@@ -464,17 +537,6 @@ function View1({ onVerCartera }: { onVerCartera: () => void }) {
           ‹
         </button>
 
-        {/* 
-          ESTE ES EL PUNTO CLAVE DEL DISEÑO.
-
-          El tamaño se calcula respetando simultáneamente:
-          1. el ancho disponible
-          2. el alto real disponible
-
-          La imagen mantiene SIEMPRE 1992 / 1152.
-          Así no se estira ni se deforma.
-          Se reserva solo el espacio mínimo para el nombre y los indicadores.
-        */}
         <div
           style={{
             position: 'relative',
@@ -489,7 +551,6 @@ function View1({ onVerCartera }: { onVerCartera: () => void }) {
             zIndex: 4,
           }}
         >
-          {/* Marco de la imagen: EXACTAMENTE 1992 × 1152 */}
           <div
             style={{
               position: 'relative',
@@ -527,7 +588,6 @@ function View1({ onVerCartera }: { onVerCartera: () => void }) {
               }}
             />
 
-            {/* Fallback si la imagen no existe */}
             <div
               style={{
                 display: 'none',
@@ -551,13 +611,6 @@ function View1({ onVerCartera }: { onVerCartera: () => void }) {
             </div>
           </div>
 
-          {/* 
-            Fila del archivo.
-            SIN tarjeta gruesa.
-            SIN icono.
-            SIN "ARCHIVO POWER BI".
-            Solo nombre formal + tres puntos.
-          */}
           <div
             style={{
               width: '100%',
@@ -620,7 +673,6 @@ function View1({ onVerCartera }: { onVerCartera: () => void }) {
             </a>
           </div>
 
-          {/* Indicadores debajo del archivo */}
           <div
             style={{
               height: '8px',
@@ -651,7 +703,6 @@ function View1({ onVerCartera }: { onVerCartera: () => void }) {
           </div>
         </div>
 
-        {/* Flecha derecha */}
         <button
           onClick={next}
           aria-label="Dashboard siguiente"
@@ -684,7 +735,6 @@ function View1({ onVerCartera }: { onVerCartera: () => void }) {
         </button>
       </div>
 
-      {/* Botón inferior. No ocupa espacio del dashboard. */}
       <div
         style={{
           flex: '0 0 34px',
@@ -734,7 +784,6 @@ function View2({ clients, loading, onSelect, onBack }: {
   const [sortField, setSortField] = useState<SortField>('nombre')
   const [sortOrder, setSortOrder] = useState<SortOrder>('asc')
 
-  // Opciones únicas para el filtro de IFI
   const ifiOptions = useMemo(() => {
     const set = new Set<string>()
     clients.forEach(c => {
@@ -744,7 +793,6 @@ function View2({ clients, loading, onSelect, onBack }: {
     return Array.from(set).sort()
   }, [clients])
 
-  // Opciones únicas para el filtro de Tipo Vencimiento
   const vencOptions = useMemo(() => {
     const set = new Set<string>()
     clients.forEach(c => {
@@ -754,7 +802,6 @@ function View2({ clients, loading, onSelect, onBack }: {
     return Array.from(set).sort()
   }, [clients])
 
-  // Filtrado y Ordenamiento
   const processedClients = useMemo(() => {
     return clients
       .filter(c => {
@@ -821,9 +868,11 @@ function View2({ clients, loading, onSelect, onBack }: {
           padding: '6px 14px', color: C.textMid, fontSize: '13px', cursor: 'pointer',
           fontFamily: 'Inter, sans-serif', boxShadow: '0 1px 3px rgba(13,43,94,0.07)',
         }}>← Volver</button>
+
         <h2 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: '18px', color: C.navy, margin: 0 }}>
           Cartera de Clientes
         </h2>
+
         <span style={{
           fontFamily: 'JetBrains Mono, monospace', fontSize: '11px', color: C.textSoft,
           background: C.white, padding: '3px 10px', borderRadius: '20px', border: `1px solid ${C.border}`,
@@ -832,19 +881,20 @@ function View2({ clients, loading, onSelect, onBack }: {
         </span>
       </div>
 
-      {/* Controles y Filtros */}
       <div style={{
         display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '12px',
         background: C.white, padding: '12px 16px', borderRadius: '8px',
         border: `1px solid ${C.border}`, boxShadow: '0 1px 4px rgba(13,43,94,0.04)',
       }}>
-        {/* Buscador */}
         <div style={{ position: 'relative', flex: '1 1 240px' }}>
           <div style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }}>
             <IconSearch />
           </div>
+
           <input
-            type="text" placeholder="Buscar por DNI o Nombre..." value={q}
+            type="text"
+            placeholder="Buscar por DNI o Nombre..."
+            value={q}
             onChange={e => setQ(e.target.value)}
             style={{
               width: '100%', padding: '8px 12px 8px 36px',
@@ -855,11 +905,11 @@ function View2({ clients, loading, onSelect, onBack }: {
           />
         </div>
 
-        {/* Filtro IFI */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
           <label style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '10px', color: C.textSoft, textTransform: 'uppercase' }}>
             IFI:
           </label>
+
           <select
             value={selectedIFI}
             onChange={e => setSelectedIFI(e.target.value)}
@@ -875,11 +925,11 @@ function View2({ clients, loading, onSelect, onBack }: {
           </select>
         </div>
 
-        {/* Filtro Vencimiento */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
           <label style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '10px', color: C.textSoft, textTransform: 'uppercase' }}>
             Vencimiento:
           </label>
+
           <select
             value={selectedVenc}
             onChange={e => setSelectedVenc(e.target.value)}
@@ -895,7 +945,6 @@ function View2({ clients, loading, onSelect, onBack }: {
           </select>
         </div>
 
-        {/* Limpiar filtros */}
         {(selectedIFI !== 'ALL' || selectedVenc !== 'ALL' || q !== '') && (
           <button
             onClick={() => { setSelectedIFI('ALL'); setSelectedVenc('ALL'); setQ('') }}
@@ -910,7 +959,6 @@ function View2({ clients, loading, onSelect, onBack }: {
         )}
       </div>
 
-      {/* Encabezados Ordenables de Tabla */}
       <div style={{
         display: 'grid', gridTemplateColumns: '100px 1.8fr 140px 150px 130px', gap: '0 12px',
         padding: '10px 16px', background: C.navy, borderRadius: '6px 6px 0 0',
@@ -918,21 +966,24 @@ function View2({ clients, loading, onSelect, onBack }: {
         <button onClick={() => toggleSort('dni')} style={thBtnStyle}>
           DNI {renderSortArrow('dni')}
         </button>
+
         <button onClick={() => toggleSort('nombre')} style={thBtnStyle}>
           Cliente {renderSortArrow('nombre')}
         </button>
+
         <button onClick={() => toggleSort('ifi')} style={thBtnStyle}>
           IFI {renderSortArrow('ifi')}
         </button>
+
         <button onClick={() => toggleSort('vencimiento')} style={thBtnStyle}>
           Tipo Vencimiento {renderSortArrow('vencimiento')}
         </button>
+
         <button onClick={() => toggleSort('saldo')} style={thBtnStyle}>
           Saldo {renderSortArrow('saldo')}
         </button>
       </div>
 
-      {/* Filas de la Tabla */}
       <div style={{ flex: 1, overflowY: 'auto', border: `1px solid ${C.border}`, borderRadius: '0 0 8px 8px', background: C.white, boxShadow: '0 2px 10px rgba(13,43,94,0.06)' }}>
         {loading && clients.length === 0 ? (
           <div style={{ padding: '30px', textAlign: 'center', color: C.textSoft, fontFamily: 'Inter, sans-serif' }}>
@@ -948,29 +999,32 @@ function View2({ clients, loading, onSelect, onBack }: {
             const isZero = saldoNum === 0
 
             return (
-              <button key={client.id || idx} onClick={() => onSelect(client)} style={{
-                width: '100%', display: 'grid', gridTemplateColumns: '100px 1.8fr 140px 150px 130px', gap: '0 12px',
-                padding: '11px 16px', background: 'transparent', border: 'none',
-                borderBottom: `1px solid ${C.surface}`, cursor: 'pointer', textAlign: 'left',
-                transition: 'background 0.13s', alignItems: 'center',
-              }}
+              <button
+                key={client.id || idx}
+                onClick={() => onSelect(client)}
+                style={{
+                  width: '100%', display: 'grid', gridTemplateColumns: '100px 1.8fr 140px 150px 130px', gap: '0 12px',
+                  padding: '11px 16px', background: 'transparent', border: 'none',
+                  borderBottom: `1px solid ${C.surface}`, cursor: 'pointer', textAlign: 'left',
+                  transition: 'background 0.13s', alignItems: 'center',
+                }}
                 onMouseEnter={e => (e.currentTarget.style.background = C.bg)}
                 onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
               >
-                {/* DNI */}
                 <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '11px', color: C.textSoft }}>
                   {formatDNI(getValue(client, 'DNI', 'dni', 'Dni'))}
                 </span>
 
-                {/* Nombre Completo en 1 línea sin recortar */}
-                <span style={{
-                  fontFamily: 'Inter, sans-serif', fontSize: '13px', color: C.textMid, fontWeight: 500,
-                  whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-                }} title={getValue(client, 'NOMBRE', 'nombre', 'CLIENTE', 'cliente', 'TITULAR')}>
+                <span
+                  style={{
+                    fontFamily: 'Inter, sans-serif', fontSize: '13px', color: C.textMid, fontWeight: 500,
+                    whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                  }}
+                  title={getValue(client, 'NOMBRE', 'nombre', 'CLIENTE', 'cliente', 'TITULAR')}
+                >
                   {getValue(client, 'NOMBRE', 'nombre', 'CLIENTE', 'cliente', 'TITULAR')}
                 </span>
 
-                {/* IFI */}
                 <span style={{
                   fontFamily: 'Inter, sans-serif', fontSize: '12px', color: C.textMid,
                   whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
@@ -978,7 +1032,6 @@ function View2({ clients, loading, onSelect, onBack }: {
                   {getValue(client, 'IFI', 'ifi')}
                 </span>
 
-                {/* Tipo de Vencimiento */}
                 <span style={{
                   fontFamily: 'JetBrains Mono, monospace', fontSize: '11px', color: C.navyLight,
                   whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
@@ -986,7 +1039,6 @@ function View2({ clients, loading, onSelect, onBack }: {
                   {getValue(client, 'TIPO DE VENCIMIENTO', 'TIPO_VENCIMIENTO', 'vencimiento')}
                 </span>
 
-                {/* Burbuja de Saldo (Gris si es 0, Roja si hay dinero) */}
                 <div>
                   <span style={{
                     display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
@@ -1044,6 +1096,7 @@ function PasswordModal({ onClose, onSuccess }: { onClose: () => void; onSuccess:
         onClick={onClose}
         style={{ position: 'fixed', inset: 0, background: 'rgba(13,43,94,0.45)', zIndex: 200, backdropFilter: 'blur(3px)' }}
       />
+
       <div
         style={{
           position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', zIndex: 201,
@@ -1055,6 +1108,7 @@ function PasswordModal({ onClose, onSuccess }: { onClose: () => void; onSuccess:
         <div style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: '15px', color: C.navy, marginBottom: '4px' }}>
           Desbloquear edición
         </div>
+
         <div style={{ fontFamily: 'Inter, sans-serif', fontSize: '12px', color: C.textSoft, marginBottom: '14px' }}>
           Ingresa la contraseña para poder editar los registros.
         </div>
@@ -1089,29 +1143,96 @@ function PasswordModal({ onClose, onSuccess }: { onClose: () => void; onSuccess:
 }
 
 // ── Componente Colapsable ───────────────────────────────────────────────────
-function Section({ title, accent, children, defaultOpen = false }: {
-  title: string; accent: string; children: React.ReactNode; defaultOpen?: boolean
+function Section({
+  title,
+  accent,
+  children,
+  defaultOpen = false,
+  action,
+}: {
+  title: string
+  accent: string
+  children: React.ReactNode
+  defaultOpen?: boolean
+  action?: React.ReactNode
 }) {
   const [open, setOpen] = useState(defaultOpen)
+
   return (
-    <div style={{ border: `1px solid ${C.border}`, borderRadius: '9px', overflow: 'hidden', boxShadow: '0 1px 4px rgba(13,43,94,0.05)' }}>
-      <button onClick={() => setOpen(o => !o)} style={{
-        width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '11px 16px', background: C.white, border: 'none', cursor: 'pointer',
-        borderLeft: `5px solid ${accent}`,
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <span style={{
-            display: 'inline-block', padding: '2px 10px', borderRadius: '20px',
-            background: `${accent}18`, color: accent,
-            fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: '12px',
-            letterSpacing: '0.02em',
-          }}>
-            {title}
-          </span>
+    <div
+      style={{
+        border: `1px solid ${C.border}`,
+        borderRadius: '9px',
+        overflow: 'hidden',
+        boxShadow: '0 1px 4px rgba(13,43,94,0.05)',
+      }}
+    >
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '11px 16px',
+          background: C.white,
+          borderLeft: `5px solid ${accent}`,
+          gap: '10px',
+        }}
+      >
+        <button
+          onClick={() => setOpen(o => !o)}
+          style={{
+            flex: 1,
+            minWidth: 0,
+            display: 'flex',
+            alignItems: 'center',
+            padding: 0,
+            background: 'transparent',
+            border: 'none',
+            cursor: 'pointer',
+            textAlign: 'left',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
+            <span style={{
+              display: 'inline-block', padding: '2px 10px', borderRadius: '20px',
+              background: `${accent}18`, color: accent,
+              fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: '12px',
+              letterSpacing: '0.02em',
+              whiteSpace: 'nowrap',
+            }}>
+              {title}
+            </span>
+          </div>
+        </button>
+
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            flexShrink: 0,
+          }}
+        >
+          {action}
+
+          <button
+            onClick={() => setOpen(o => !o)}
+            aria-label={open ? 'Contraer sección' : 'Expandir sección'}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              padding: '2px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <IconChevron open={open} color={C.textSoft} />
+          </button>
         </div>
-        <IconChevron open={open} color={C.textSoft} />
-      </button>
+      </div>
+
       {open && (
         <div style={{ padding: '16px', background: C.bg, borderTop: `1px solid ${C.border}` }}>
           {children}
@@ -1134,6 +1255,7 @@ function Field({ label, value, isEdit = false, singleLine = false, onChange }: {
       }}>
         {label}
       </span>
+
       {isEdit ? (
         <input
           value={value === '---' ? '' : value}
@@ -1168,12 +1290,6 @@ function Grid({ cols = 3, children }: { cols?: number; children: React.ReactNode
 }
 
 // ── Seguimiento: tabla editable con links de Outlook, persistida en Supabase ─
-// No se sube ningún archivo a ningún almacenamiento: el equipo entero tiene
-// acceso al buzón compartido solicitudescarteradirecta@mivivienda.com.pe, así
-// que basta con pegar el "Copiar vínculo" de Outlook a cada correo — el link
-// abre el correo real en Outlook para cualquiera del equipo con acceso a ese
-// buzón. Cero costo de almacenamiento, sin importar cuántos correos se enlacen.
-
 type SeguimientoRow = {
   id: string
   client_id: string | number
@@ -1199,11 +1315,11 @@ function IconTrash({ size = 13, color = C.s5 }: { size?: number; color?: string 
   )
 }
 
-// Columnas: Fecha Correo | Correo Cliente | Estado | Fecha Respuesta | Respuesta | Eliminar
 const seguimientoGridCols = '112px minmax(150px,1.5fr) 138px 112px 52px 32px'
 
 function SeguimientoTableHead() {
   const headers = ['Fecha Correo', 'Correo Cliente', 'Estado de Respuesta', 'Fecha Respuesta', 'Respuesta', '']
+
   return (
     <div style={{
       display: 'grid', gridTemplateColumns: seguimientoGridCols, gap: '0 10px',
@@ -1245,7 +1361,6 @@ function AttachmentField({
 }) {
   const [draft, setDraft] = useState(url || '')
 
-  // Si el link cambia desde afuera (ej. se cargó de Supabase), sincroniza el input
   useEffect(() => {
     setDraft(url || '')
   }, [url])
@@ -1259,6 +1374,7 @@ function AttachmentField({
 
   const commit = () => {
     const trimmed = draft.trim()
+
     if (trimmed !== (url || '')) {
       onSetUrl(trimmed)
     }
@@ -1383,7 +1499,6 @@ function SeguimientoRowView({
         onSetUrl={url => onChange(row.id, { respuesta_archivo_url: url || null })}
       />
 
-      {/* Eliminar flujo — solo visible con edición desbloqueada */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         {canEdit && (
           <button
@@ -1416,6 +1531,7 @@ function SeguimientoManager({ clientId, canEdit }: { clientId: string | number; 
 
     async function load() {
       setLoading(true)
+
       const { data, error } = await supabase
         .from('seguimientos')
         .select('*')
@@ -1428,11 +1544,13 @@ function SeguimientoManager({ clientId, canEdit }: { clientId: string | number; 
         } else {
           setRows(data || [])
         }
+
         setLoading(false)
       }
     }
 
     load()
+
     return () => { cancelled = true }
   }, [clientId])
 
@@ -1449,7 +1567,12 @@ function SeguimientoManager({ clientId, canEdit }: { clientId: string | number; 
 
   const updateRow = async (id: string, patch: Partial<SeguimientoRow>) => {
     setRows(prev => prev.map(r => (r.id === id ? { ...r, ...patch } : r)))
-    const { error } = await supabase.from('seguimientos').update(patch).eq('id', id)
+
+    const { error } = await supabase
+      .from('seguimientos')
+      .update(patch)
+      .eq('id', id)
+
     if (error) {
       console.error('Error al guardar seguimiento:', error)
       alert(`No se pudo guardar el cambio.\n\n${error.message}`)
@@ -1459,7 +1582,11 @@ function SeguimientoManager({ clientId, canEdit }: { clientId: string | number; 
   const deleteRow = async (id: string) => {
     if (!window.confirm('¿Eliminar este registro de seguimiento? Esta acción no se puede deshacer.')) return
 
-    const { error } = await supabase.from('seguimientos').delete().eq('id', id)
+    const { error } = await supabase
+      .from('seguimientos')
+      .delete()
+      .eq('id', id)
+
     if (error) {
       console.error('Error al eliminar seguimiento:', error)
       alert(`No se pudo eliminar el registro.\n\n${error.message}`)
@@ -1471,15 +1598,21 @@ function SeguimientoManager({ clientId, canEdit }: { clientId: string | number; 
 
   const handleCreate = async () => {
     if (creating) return
+
     try {
       setCreating(true)
+
       const { data, error } = await supabase
         .from('seguimientos')
-        .insert({ client_id: clientId, estado_respuesta: 'no_respondido' })
+        .insert({
+          client_id: clientId,
+          estado_respuesta: 'no_respondido'
+        })
         .select()
         .single()
 
       if (error) throw error
+
       setRows(prev => [data as SeguimientoRow, ...prev])
     } catch (err: any) {
       alert(`No se pudo crear el flujo de correo.\n\n${err?.message || 'Error desconocido'}`)
@@ -1515,6 +1648,7 @@ function SeguimientoManager({ clientId, canEdit }: { clientId: string | number; 
 
       <div style={{ border: `1px solid ${C.border}`, borderRadius: '8px', overflow: 'hidden', boxShadow: '0 1px 4px rgba(13,43,94,0.05)' }}>
         <SeguimientoTableHead />
+
         {loading ? (
           <div style={{ padding: '18px', textAlign: 'center', color: C.textSoft, fontFamily: 'Inter, sans-serif', fontSize: '12px', background: C.white }}>
             Cargando seguimiento...
@@ -1524,7 +1658,13 @@ function SeguimientoManager({ clientId, canEdit }: { clientId: string | number; 
             Sin registros de seguimiento todavía.
           </div>
         ) : (
-          <SeguimientoRowView row={latest} canEdit={canEdit} onChange={updateRow} onDelete={deleteRow} highlight />
+          <SeguimientoRowView
+            row={latest}
+            canEdit={canEdit}
+            onChange={updateRow}
+            onDelete={deleteRow}
+            highlight
+          />
         )}
       </div>
 
@@ -1548,8 +1688,15 @@ function SeguimientoManager({ clientId, canEdit }: { clientId: string | number; 
           {showHist && (
             <div style={{ marginTop: '10px', border: `1px solid ${C.border}`, borderRadius: '8px', overflow: 'hidden' }}>
               <SeguimientoTableHead />
+
               {rest.map(r => (
-                <SeguimientoRowView key={r.id} row={r} canEdit={canEdit} onChange={updateRow} onDelete={deleteRow} />
+                <SeguimientoRowView
+                  key={r.id}
+                  row={r}
+                  canEdit={canEdit}
+                  onChange={updateRow}
+                  onDelete={deleteRow}
+                />
               ))}
             </div>
           )}
@@ -1564,11 +1711,14 @@ function Btn({ color, border, bg, onClick, children }: {
   color: string; border: string; bg: string; onClick: () => void; children: React.ReactNode
 }) {
   return (
-    <button onClick={onClick} style={{
-      background: bg, border: `1px solid ${border}`, borderRadius: '6px',
-      color: color, fontFamily: 'Outfit, sans-serif', fontWeight: 600,
-      fontSize: '12px', padding: '6px 13px', cursor: 'pointer', whiteSpace: 'nowrap',
-    }}>
+    <button
+      onClick={onClick}
+      style={{
+        background: bg, border: `1px solid ${border}`, borderRadius: '6px',
+        color: color, fontFamily: 'Outfit, sans-serif', fontWeight: 600,
+        fontSize: '12px', padding: '6px 13px', cursor: 'pointer', whiteSpace: 'nowrap',
+      }}
+    >
       {children}
     </button>
   )
@@ -1595,6 +1745,7 @@ function ClientModal({
   const dni = formatDNI(getValue(editData, 'DNI', 'dni', 'Dni'))
   const nombre = getValue(editData, 'NOMBRE', 'nombre', 'CLIENTE', 'cliente', 'TITULAR')
   const prestamo = formatPrestamo(getValue(editData, 'N° PRESTAMO', 'N° PRESTAMO ', 'PRESTAMO', 'n_prestamo', 'prestamo'))
+  const emailCliente = getValue(editData, 'EMAIL', 'email', 'CORREO', 'correo')
 
   const updateField = (value: string, ...keys: string[]) => {
     const actualKey = getActualKey(editData, ...keys)
@@ -1702,18 +1853,24 @@ function ClientModal({
 
   return (
     <>
-      <div onClick={onClose} style={{
-        position: 'fixed', inset: 0, background: 'rgba(13,43,94,0.45)',
-        zIndex: 100, backdropFilter: 'blur(3px)',
-      }} />
-      <div style={{
-        position: 'fixed', top: '50%', left: '50%',
-        transform: 'translate(-50%, -50%)', zIndex: 101,
-        width: 'min(860px, 95vw)', maxHeight: '88vh', overflowY: 'auto',
-        background: C.bg, border: `1px solid ${C.border}`,
-        borderRadius: '14px', boxShadow: '0 20px 60px rgba(13,43,94,0.22)',
-        display: 'flex', flexDirection: 'column',
-      }}>
+      <div
+        onClick={onClose}
+        style={{
+          position: 'fixed', inset: 0, background: 'rgba(13,43,94,0.45)',
+          zIndex: 100, backdropFilter: 'blur(3px)',
+        }}
+      />
+
+      <div
+        style={{
+          position: 'fixed', top: '50%', left: '50%',
+          transform: 'translate(-50%, -50%)', zIndex: 101,
+          width: 'min(860px, 95vw)', maxHeight: '88vh', overflowY: 'auto',
+          background: C.bg, border: `1px solid ${C.border}`,
+          borderRadius: '14px', boxShadow: '0 20px 60px rgba(13,43,94,0.22)',
+          display: 'flex', flexDirection: 'column',
+        }}
+      >
         {/* Cabecera del Modal */}
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -1731,15 +1888,18 @@ function ClientModal({
                 {dni.slice(-2)}
               </span>
             </div>
+
             <div style={{ minWidth: 0, flex: 1 }}>
               <div
                 title={nombre}
                 style={{
                   fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: '15px', color: '#fff',
                   whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-                }}>
+                }}
+              >
                 {nombre}
               </div>
+
               <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '10px', color: 'rgba(255,255,255,0.55)' }}>
                 DNI #{dni}
               </div>
@@ -1748,8 +1908,11 @@ function ClientModal({
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
             {canEdit && isEdit && (
-              <Btn color="#fff" border={C.s5} bg={C.s5} onClick={handleCancel}>Reestablecer</Btn>
+              <Btn color="#fff" border={C.s5} bg={C.s5} onClick={handleCancel}>
+                Reestablecer
+              </Btn>
             )}
+
             {canEdit ? (
               <Btn
                 color="#fff"
@@ -1771,13 +1934,34 @@ function ClientModal({
                 Editar
               </Btn>
             )}
+
             {canEdit && isEdit && (
               <Btn color="#fff" border={C.s1} bg={C.s1} onClick={handleSave}>
                 {saving ? 'Guardando...' : 'Guardar'}
               </Btn>
             )}
-            <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: '6px', cursor: 'pointer', padding: '5px', display: 'flex' }}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+
+            <button
+              onClick={onClose}
+              style={{
+                background: 'rgba(255,255,255,0.1)',
+                border: '1px solid rgba(255,255,255,0.2)',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                padding: '5px',
+                display: 'flex',
+              }}
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="rgba(255,255,255,0.8)"
+                strokeWidth={2}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
                 <path d="M18 6L6 18M6 6l12 12" />
               </svg>
             </button>
@@ -1787,8 +1971,14 @@ function ClientModal({
         {/* Contenido Modal */}
         <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
 
-          {/* 1. Información del Cliente (Nombre completo en 1 línea con espacio amplio) */}
-          <div style={{ border: `1px solid ${C.border}`, borderRadius: '9px', overflow: 'hidden', boxShadow: '0 1px 4px rgba(13,43,94,0.05)', borderLeft: `5px solid ${C.s1}` }}>
+          {/* 1. Información del Cliente */}
+          <div style={{
+            border: `1px solid ${C.border}`,
+            borderRadius: '9px',
+            overflow: 'hidden',
+            boxShadow: '0 1px 4px rgba(13,43,94,0.05)',
+            borderLeft: `5px solid ${C.s1}`,
+          }}>
             <div style={{ padding: '11px 16px', background: C.white, borderBottom: `1px solid ${C.border}` }}>
               <span style={{
                 display: 'inline-block', padding: '2px 10px', borderRadius: '20px',
@@ -1798,11 +1988,32 @@ function ClientModal({
                 1. Información del Cliente
               </span>
             </div>
+
             <div style={{ padding: '16px', background: C.bg }}>
               <div style={{ display: 'grid', gridTemplateColumns: '100px 1fr 100px', gap: '14px 20px', alignItems: 'center' }}>
-                <Field label="DNI" value={dni} isEdit={isEdit} singleLine onChange={value => updateField(value, 'DNI', 'dni', 'Dni')} />
-                <Field label="Nombre" value={nombre} isEdit={isEdit} singleLine onChange={value => updateField(value, 'NOMBRE', 'nombre', 'CLIENTE', 'cliente', 'TITULAR')} />
-                <Field label="Fallecido" value={getValue(editData, 'FALLECIDO', 'fallecido')} isEdit={isEdit} singleLine onChange={value => updateField(value, 'FALLECIDO', 'fallecido')} />
+                <Field
+                  label="DNI"
+                  value={dni}
+                  isEdit={isEdit}
+                  singleLine
+                  onChange={value => updateField(value, 'DNI', 'dni', 'Dni')}
+                />
+
+                <Field
+                  label="Nombre"
+                  value={nombre}
+                  isEdit={isEdit}
+                  singleLine
+                  onChange={value => updateField(value, 'NOMBRE', 'nombre', 'CLIENTE', 'cliente', 'TITULAR')}
+                />
+
+                <Field
+                  label="Fallecido"
+                  value={getValue(editData, 'FALLECIDO', 'fallecido')}
+                  isEdit={isEdit}
+                  singleLine
+                  onChange={value => updateField(value, 'FALLECIDO', 'fallecido')}
+                />
               </div>
             </div>
           </div>
@@ -1829,7 +2040,42 @@ function ClientModal({
           </Section>
 
           {/* 4. Levantamiento de Hipoteca */}
-          <Section title="4. Levantamiento de Hipoteca" accent={C.s4}>
+          <Section
+            title="4. Levantamiento de Hipoteca"
+            accent={C.s4}
+            action={
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+
+                  abrirCorreoLevantamientoHipoteca(
+                    nombre,
+                    dni,
+                    emailCliente
+                  )
+                }}
+                title="Abrir correo de levantamiento de hipoteca"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  background: C.blue1,
+                  border: 'none',
+                  borderRadius: '6px',
+                  color: '#fff',
+                  fontFamily: 'Outfit, sans-serif',
+                  fontWeight: 600,
+                  fontSize: '10px',
+                  padding: '6px 10px',
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                <IconMail size={14} color="#fff" />
+                Enviar Lev. Hip.
+              </button>
+            }
+          >
             <Grid cols={2}>
               <Field label="Levantamiento de Hipoteca" value={getValue(editData, 'LEVANTAMIENTO DE HIPOTECA', 'LEV_HIPOTECA', 'lev_hip')} isEdit={isEdit} singleLine onChange={value => updateField(value, 'LEVANTAMIENTO DE HIPOTECA', 'LEV_HIPOTECA', 'lev_hip')} />
               <Field label="F. Entrega Lev. Hip." value={getValue(editData, 'F. ENTREGA LEV. HIP.', 'F. ENTREGA LEV. HIP', 'FECHA_LEV_HIP', 'f_entrega_lev')} isEdit={isEdit} singleLine onChange={value => updateField(value, 'F. ENTREGA LEV. HIP.', 'F. ENTREGA LEV. HIP', 'FECHA_LEV_HIP', 'f_entrega_lev')} />
@@ -1875,8 +2121,6 @@ export default function App() {
     }
   }
 
-  // La vista de dashboards funciona como una pantalla completa:
-  // no permite que el documento cree scroll vertical u horizontal.
   useEffect(() => {
     const html = document.documentElement
     const body = document.body
@@ -1926,6 +2170,7 @@ export default function App() {
 
           if (data && data.length > 0) {
             allClients = [...allClients, ...data]
+
             if (data.length < pageSize) {
               fetchMore = false
             } else {
@@ -1964,6 +2209,7 @@ export default function App() {
         isUnlocked={isUnlocked}
         onLockClick={handleLockClick}
       />
+
       <main
         style={{
           flex: '1 1 auto',
@@ -1973,7 +2219,10 @@ export default function App() {
           overflow: 'hidden',
         }}
       >
-        {view === 'dashboard' && <View1 onVerCartera={() => setView('cartera')} />}
+        {view === 'dashboard' && (
+          <View1 onVerCartera={() => setView('cartera')} />
+        )}
+
         {view === 'cartera' && (
           <View2
             clients={clients}
@@ -1983,6 +2232,7 @@ export default function App() {
           />
         )}
       </main>
+
       {selected && (
         <ClientModal
           client={selected}
@@ -1995,10 +2245,12 @@ export default function App() {
                 client.id === updatedClient.id ? updatedClient : client
               )
             )
+
             setSelected(updatedClient)
           }}
         />
       )}
+
       {showPasswordModal && (
         <PasswordModal
           onClose={() => setShowPasswordModal(false)}
