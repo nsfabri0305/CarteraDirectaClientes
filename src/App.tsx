@@ -266,8 +266,7 @@ const DASHBOARDS = [
   },
 ]
 
-// Distancia circular más corta entre el índice i y el índice actual,
-// usada para el efecto "coverflow" (peeks a los lados).
+// Distancia circular más corta entre el índice i y el índice actual
 function relOffset(i: number, current: number, n: number): number {
   if (n <= 0) return 0
   let diff = i - current
@@ -295,6 +294,23 @@ function IconChevron({ open, color = C.textSoft }: { open: boolean; color?: stri
 }
 function IconSearch() {
   return <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={C.textSoft} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+}
+function IconEdit({ size = 13, color = C.celeste }: { size?: number; color?: string }) {
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+}
+function IconLink({ size = 13, color = C.celeste }: { size?: number; color?: string }) {
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+}
+function IconTrash({ size = 13, color = C.s5 }: { size?: number; color?: string }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 6h18" />
+      <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+      <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+      <path d="M10 11v6" />
+      <path d="M14 11v6" />
+    </svg>
+  )
 }
 
 // ── Header Superior ──────────────────────────────────────────────────────────
@@ -831,7 +847,7 @@ function View1({ onVerCartera }: { onVerCartera: () => void }) {
   )
 }
 
-// ── Vista 2: Lista de Clientes con Filtros, Saldo y Ordenamiento ────────────
+// ── Vista 2: Lista de Clientes ───────────────────────────────────────────────
 type SortField = 'dni' | 'nombre' | 'ifi' | 'vencimiento' | 'saldo'
 type SortOrder = 'asc' | 'desc'
 
@@ -1132,7 +1148,7 @@ const thBtnStyle: React.CSSProperties = {
   display: 'flex', alignItems: 'center',
 }
 
-// ── Modal de Contraseña (desbloquear edición) ───────────────────────────────
+// ── Modal de Contraseña ──────────────────────────────────────────────────────
 function PasswordModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: () => void }) {
   const [value, setValue] = useState('')
   const [error, setError] = useState(false)
@@ -1352,7 +1368,72 @@ function Grid({ cols = 3, children }: { cols?: number; children: React.ReactNode
   )
 }
 
-// ── Seguimiento: tabla editable con links de Outlook, persistida en Supabase ─
+// ── Modal para gestionar link ────────────────────────────────────────────────
+function LinkModal({ 
+  title, 
+  url, 
+  onSave, 
+  onClose 
+}: { 
+  title: string; 
+  url: string | null; 
+  onSave: (url: string) => void; 
+  onClose: () => void 
+}) {
+  const [draft, setDraft] = useState(url || '')
+
+  return (
+    <>
+      <div
+        onClick={onClose}
+        style={{ position: 'fixed', inset: 0, background: 'rgba(13,43,94,0.45)', zIndex: 300, backdropFilter: 'blur(3px)' }}
+      />
+
+      <div
+        style={{
+          position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', zIndex: 301,
+          width: 'min(400px, 90vw)', background: C.bg, border: `1px solid ${C.border}`,
+          borderRadius: '14px', boxShadow: '0 20px 60px rgba(13,43,94,0.22)', padding: '22px',
+          boxSizing: 'border-box',
+        }}
+      >
+        <div style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: '15px', color: C.navy, marginBottom: '4px' }}>
+          {title}
+        </div>
+
+        <div style={{ fontFamily: 'Inter, sans-serif', fontSize: '12px', color: C.textSoft, marginBottom: '14px' }}>
+          Pega el link del correo de Outlook aquí:
+        </div>
+
+        <input
+          type="text"
+          value={draft}
+          onChange={e => setDraft(e.target.value)}
+          placeholder="https://outlook.office.com/..."
+          style={{
+            width: '100%', boxSizing: 'border-box', padding: '9px 12px',
+            background: C.white, border: `1px solid ${C.celeste}`,
+            borderRadius: '6px', color: C.text, fontFamily: 'Inter, sans-serif', fontSize: '13px', outline: 'none',
+          }}
+        />
+
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '18px' }}>
+          <Btn color={C.textMid} border={C.border} bg={C.white} onClick={onClose}>Cancelar</Btn>
+          <Btn 
+            color="#fff" 
+            border={C.blue1} 
+            bg={C.blue1} 
+            onClick={() => { onSave(draft.trim()); onClose(); }}
+          >
+            Guardar
+          </Btn>
+        </div>
+      </div>
+    </>
+  )
+}
+
+// ── Seguimiento: tabla con gestión mejorada ─────────────────────────────────
 type SeguimientoRow = {
   id: string
   client_id: string | number
@@ -1366,22 +1447,10 @@ type SeguimientoRow = {
   created_at?: string
 }
 
-function IconTrash({ size = 13, color = C.s5 }: { size?: number; color?: string }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-      <path d="M3 6h18" />
-      <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-      <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-      <path d="M10 11v6" />
-      <path d="M14 11v6" />
-    </svg>
-  )
-}
+const seguimientoGridCols = '112px minmax(80px,1fr) 138px 112px 52px 32px'
 
-const seguimientoGridCols = '112px minmax(150px,1.5fr) 138px 112px 52px 32px'
-
-function SeguimientoTableHead() {
-  const headers = ['Fecha Correo', 'Correo Cliente', 'Estado de Respuesta', 'Fecha Respuesta', 'Respuesta', '']
+function SeguimientoTableHead({ showActions }: { showActions: boolean }) {
+  const headers = ['Fecha Correo', 'Correo', 'Estado', 'Fecha Resp.', 'Respuesta', showActions ? 'Acción' : '']
 
   return (
     <div style={{
@@ -1407,86 +1476,51 @@ const seguimientoDateStyle: React.CSSProperties = {
   fontFamily: 'JetBrains Mono, monospace', fontSize: '11px', color: C.textMid, outline: 'none',
 }
 
-function AttachmentField({
+function AttachmentIcon({
   url,
   disabled,
-  canEdit,
   color,
-  showUrl,
-  onSetUrl,
+  canEdit,
+  onClick,
+  onEdit,
 }: {
   url: string | null
   disabled: boolean
-  canEdit: boolean
   color: string
-  showUrl: boolean
-  onSetUrl: (url: string) => void
+  canEdit: boolean
+  onClick: () => void
+  onEdit: () => void
 }) {
-  const [draft, setDraft] = useState(url || '')
-
-  useEffect(() => {
-    setDraft(url || '')
-  }, [url])
-
-  const canType = canEdit && !disabled
-
-  const handleIconClick = () => {
-    if (disabled || !url) return
-    window.open(url, '_blank', 'noopener,noreferrer')
-  }
-
-  const commit = () => {
-    const trimmed = draft.trim()
-
-    if (trimmed !== (url || '')) {
-      onSetUrl(trimmed)
-    }
-  }
-
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', minWidth: 0 }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0 }}>
+      <button
+        onClick={onClick}
+        disabled={disabled || !url}
+        title={url ? 'Abrir correo en Outlook' : canEdit ? 'Agregar link del correo' : 'Sin correo enlazado'}
+        style={{
+          background: 'none', border: 'none', padding: 0, margin: 0,
+          cursor: disabled || !url ? 'default' : 'pointer',
+          opacity: disabled ? 0.35 : 1,
+          display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+        }}
+      >
+        <IconMail size={16} color={url ? color : C.textSoft} />
+      </button>
+
+      {canEdit && (
         <button
-          onClick={handleIconClick}
-          disabled={disabled || !url}
-          title={url ? 'Abrir correo en Outlook' : canType ? 'Pega aquí el link del correo' : 'Sin correo enlazado'}
+          onClick={onEdit}
+          title="Editar link del correo"
           style={{
-            background: 'none', border: 'none', padding: 0, margin: 0,
-            cursor: disabled || !url ? 'default' : 'pointer',
-            opacity: disabled ? 0.35 : 1,
-            display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+            background: 'none', border: 'none', padding: '2px', margin: 0,
+            cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            borderRadius: '4px',
           }}
+          onMouseEnter={e => { e.currentTarget.style.background = `${color}18` }}
+          onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
         >
-          <IconMail size={16} color={url ? color : C.textSoft} />
+          <IconEdit size={12} color={color} />
         </button>
-
-        {canType && (
-          <input
-            value={draft}
-            onChange={e => setDraft(e.target.value)}
-            onBlur={commit}
-            onKeyDown={e => { if (e.key === 'Enter') (e.currentTarget as HTMLInputElement).blur() }}
-            placeholder="Pegar link de Outlook..."
-            style={{
-              flex: '1 1 auto', minWidth: 0, boxSizing: 'border-box',
-              background: C.white, border: `1px solid ${C.border}`, borderRadius: '4px',
-              padding: '4px 6px', fontFamily: 'Inter, sans-serif', fontSize: '10px',
-              color: C.textMid, outline: 'none',
-            }}
-          />
-        )}
-      </div>
-
-      {showUrl && !canType && (
-        <span
-          title={url || ''}
-          style={{
-            fontFamily: 'Inter, sans-serif', fontSize: '10px', color: C.textSoft,
-            whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%',
-          }}
-        >
-          {url || '—'}
-        </span>
       )}
     </div>
   )
@@ -1506,6 +1540,7 @@ function SeguimientoRowView({
   onDelete: (id: string) => void
 }) {
   const isRespondido = row.estado_respuesta === 'respondido'
+  const [showLinkModal, setShowLinkModal] = useState<'correo' | 'respuesta' | null>(null)
 
   return (
     <div style={{
@@ -1520,13 +1555,13 @@ function SeguimientoRowView({
         style={{ ...seguimientoDateStyle, opacity: canEdit ? 1 : 0.75 }}
       />
 
-      <AttachmentField
+      <AttachmentIcon
         url={row.correo_archivo_url}
         disabled={false}
-        canEdit={canEdit}
         color={C.celeste}
-        showUrl
-        onSetUrl={url => onChange(row.id, { correo_archivo_url: url || null })}
+        canEdit={canEdit}
+        onClick={() => { if (row.correo_archivo_url) window.open(row.correo_archivo_url, '_blank', 'noopener,noreferrer') }}
+        onEdit={() => setShowLinkModal('correo')}
       />
 
       <select
@@ -1553,13 +1588,13 @@ function SeguimientoRowView({
         style={{ ...seguimientoDateStyle, opacity: canEdit && isRespondido ? 1 : 0.45 }}
       />
 
-      <AttachmentField
+      <AttachmentIcon
         url={row.respuesta_archivo_url}
         disabled={!isRespondido}
-        canEdit={canEdit}
         color={C.s6}
-        showUrl={false}
-        onSetUrl={url => onChange(row.id, { respuesta_archivo_url: url || null })}
+        canEdit={canEdit}
+        onClick={() => { if (row.respuesta_archivo_url && isRespondido) window.open(row.respuesta_archivo_url, '_blank', 'noopener,noreferrer') }}
+        onEdit={() => setShowLinkModal('respuesta')}
       />
 
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -1579,6 +1614,24 @@ function SeguimientoRowView({
           </button>
         )}
       </div>
+
+      {showLinkModal === 'correo' && (
+        <LinkModal
+          title="Link del Correo"
+          url={row.correo_archivo_url}
+          onSave={(url) => onChange(row.id, { correo_archivo_url: url || null })}
+          onClose={() => setShowLinkModal(null)}
+        />
+      )}
+
+      {showLinkModal === 'respuesta' && (
+        <LinkModal
+          title="Link de la Respuesta"
+          url={row.respuesta_archivo_url}
+          onSave={(url) => onChange(row.id, { respuesta_archivo_url: url || null })}
+          onClose={() => setShowLinkModal(null)}
+        />
+      )}
     </div>
   )
 }
@@ -1588,6 +1641,7 @@ function SeguimientoManager({ clientId, canEdit }: { clientId: string | number; 
   const [loading, setLoading] = useState(true)
   const [showHist, setShowHist] = useState(false)
   const [creating, setCreating] = useState(false)
+  const [isAdminMode, setIsAdminMode] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -1684,6 +1738,11 @@ function SeguimientoManager({ clientId, canEdit }: { clientId: string | number; 
     }
   }
 
+  const handleAdminToggle = () => {
+    if (!canEdit) return
+    setIsAdminMode(!isAdminMode)
+  }
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
@@ -1695,22 +1754,40 @@ function SeguimientoManager({ clientId, canEdit }: { clientId: string | number; 
         </div>
 
         {canEdit && (
-          <button
-            onClick={handleCreate}
-            disabled={creating}
-            style={{
-              background: C.blue1, border: 'none', borderRadius: '6px', color: '#fff',
-              fontFamily: 'Outfit, sans-serif', fontWeight: 600, fontSize: '11px',
-              padding: '6px 12px', cursor: creating ? 'default' : 'pointer', opacity: creating ? 0.7 : 1,
-            }}
-          >
-            {creating ? 'Creando...' : '+ Crear flujo de correo'}
-          </button>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button
+              onClick={handleAdminToggle}
+              style={{
+                background: isAdminMode ? C.s2 : C.white,
+                border: `1px solid ${isAdminMode ? C.s2 : C.border}`,
+                borderRadius: '6px',
+                color: isAdminMode ? '#fff' : C.navyMid,
+                fontFamily: 'Outfit, sans-serif', fontWeight: 600, fontSize: '11px',
+                padding: '6px 12px', cursor: 'pointer',
+              }}
+            >
+              {isAdminMode ? '✓ Administrando' : '⚙ Administrar'}
+            </button>
+
+            {isAdminMode && (
+              <button
+                onClick={handleCreate}
+                disabled={creating}
+                style={{
+                  background: C.blue1, border: 'none', borderRadius: '6px', color: '#fff',
+                  fontFamily: 'Outfit, sans-serif', fontWeight: 600, fontSize: '11px',
+                  padding: '6px 12px', cursor: creating ? 'default' : 'pointer', opacity: creating ? 0.7 : 1,
+                }}
+              >
+                {creating ? 'Creando...' : '+ Nuevo Registro'}
+              </button>
+            )}
+          </div>
         )}
       </div>
 
       <div style={{ border: `1px solid ${C.border}`, borderRadius: '8px', overflow: 'hidden', boxShadow: '0 1px 4px rgba(13,43,94,0.05)' }}>
-        <SeguimientoTableHead />
+        <SeguimientoTableHead showActions={isAdminMode} />
 
         {loading ? (
           <div style={{ padding: '18px', textAlign: 'center', color: C.textSoft, fontFamily: 'Inter, sans-serif', fontSize: '12px', background: C.white }}>
@@ -1723,7 +1800,7 @@ function SeguimientoManager({ clientId, canEdit }: { clientId: string | number; 
         ) : (
           <SeguimientoRowView
             row={latest}
-            canEdit={canEdit}
+            canEdit={canEdit && isAdminMode}
             onChange={updateRow}
             onDelete={deleteRow}
             highlight
@@ -1750,13 +1827,13 @@ function SeguimientoManager({ clientId, canEdit }: { clientId: string | number; 
 
           {showHist && (
             <div style={{ marginTop: '10px', border: `1px solid ${C.border}`, borderRadius: '8px', overflow: 'hidden' }}>
-              <SeguimientoTableHead />
+              <SeguimientoTableHead showActions={isAdminMode} />
 
               {rest.map(r => (
                 <SeguimientoRowView
                   key={r.id}
                   row={r}
-                  canEdit={canEdit}
+                  canEdit={canEdit && isAdminMode}
                   onChange={updateRow}
                   onDelete={deleteRow}
                 />
@@ -2089,30 +2166,16 @@ function ClientModal({
               <button
                 onClick={(e) => {
                   e.stopPropagation()
-
-                  if (!canEdit) {
-                    onRequestUnlock()
-                    return
-                  }
-
+                  if (!canEdit) { onRequestUnlock(); return }
                   abrirCorreoConsultaEECC(nombre, dni)
                 }}
-                title={canEdit ? 'Consultar Estado de Cuenta' : 'Necesitas desbloquear para enviar correo'}
+                title={canEdit ? 'Consultar Estado de Cuenta' : 'Necesitas desbloquear'}
                 style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  background: canEdit ? C.s2 : C.textSoft,
-                  border: 'none',
-                  borderRadius: '6px',
-                  color: '#fff',
-                  fontFamily: 'Outfit, sans-serif',
-                  fontWeight: 600,
-                  fontSize: '10px',
-                  padding: '6px 10px',
-                  cursor: canEdit ? 'pointer' : 'not-allowed',
-                  whiteSpace: 'nowrap',
-                  opacity: canEdit ? 1 : 0.7,
+                  display: 'inline-flex', alignItems: 'center', gap: '6px',
+                  background: canEdit ? C.s2 : C.textSoft, border: 'none', borderRadius: '6px',
+                  color: '#fff', fontFamily: 'Outfit, sans-serif', fontWeight: 600, fontSize: '10px',
+                  padding: '6px 10px', cursor: canEdit ? 'pointer' : 'not-allowed',
+                  whiteSpace: 'nowrap', opacity: canEdit ? 1 : 0.7,
                 }}
               >
                 <IconMail size={14} color="#fff" />
@@ -2138,30 +2201,16 @@ function ClientModal({
               <button
                 onClick={(e) => {
                   e.stopPropagation()
-
-                  if (!canEdit) {
-                    onRequestUnlock()
-                    return
-                  }
-
+                  if (!canEdit) { onRequestUnlock(); return }
                   abrirCorreoConstanciaNoAdeudo(nombre, dni, emailCliente)
                 }}
-                title={canEdit ? 'Enviar Constancia de No Adeudo' : 'Necesitas desbloquear para enviar correo'}
+                title={canEdit ? 'Enviar Constancia de No Adeudo' : 'Necesitas desbloquear'}
                 style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  background: canEdit ? C.s3 : C.textSoft,
-                  border: 'none',
-                  borderRadius: '6px',
-                  color: '#fff',
-                  fontFamily: 'Outfit, sans-serif',
-                  fontWeight: 600,
-                  fontSize: '10px',
-                  padding: '6px 10px',
-                  cursor: canEdit ? 'pointer' : 'not-allowed',
-                  whiteSpace: 'nowrap',
-                  opacity: canEdit ? 1 : 0.7,
+                  display: 'inline-flex', alignItems: 'center', gap: '6px',
+                  background: canEdit ? C.s3 : C.textSoft, border: 'none', borderRadius: '6px',
+                  color: '#fff', fontFamily: 'Outfit, sans-serif', fontWeight: 600, fontSize: '10px',
+                  padding: '6px 10px', cursor: canEdit ? 'pointer' : 'not-allowed',
+                  whiteSpace: 'nowrap', opacity: canEdit ? 1 : 0.7,
                 }}
               >
                 <IconMail size={14} color="#fff" />
@@ -2184,34 +2233,16 @@ function ClientModal({
               <button
                 onClick={(e) => {
                   e.stopPropagation()
-
-                  if (!canEdit) {
-                    onRequestUnlock()
-                    return
-                  }
-
-                  abrirCorreoLevantamientoHipoteca(
-                    nombre,
-                    dni,
-                    emailCliente
-                  )
+                  if (!canEdit) { onRequestUnlock(); return }
+                  abrirCorreoLevantamientoHipoteca(nombre, dni, emailCliente)
                 }}
-                title={canEdit ? 'Abrir correo de levantamiento de hipoteca' : 'Necesitas desbloquear para enviar correo'}
+                title={canEdit ? 'Abrir correo de levantamiento de hipoteca' : 'Necesitas desbloquear'}
                 style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  background: canEdit ? C.blue1 : C.textSoft,
-                  border: 'none',
-                  borderRadius: '6px',
-                  color: '#fff',
-                  fontFamily: 'Outfit, sans-serif',
-                  fontWeight: 600,
-                  fontSize: '10px',
-                  padding: '6px 10px',
-                  cursor: canEdit ? 'pointer' : 'not-allowed',
-                  whiteSpace: 'nowrap',
-                  opacity: canEdit ? 1 : 0.7,
+                  display: 'inline-flex', alignItems: 'center', gap: '6px',
+                  background: canEdit ? C.blue1 : C.textSoft, border: 'none', borderRadius: '6px',
+                  color: '#fff', fontFamily: 'Outfit, sans-serif', fontWeight: 600, fontSize: '10px',
+                  padding: '6px 10px', cursor: canEdit ? 'pointer' : 'not-allowed',
+                  whiteSpace: 'nowrap', opacity: canEdit ? 1 : 0.7,
                 }}
               >
                 <IconMail size={14} color="#fff" />
