@@ -90,6 +90,25 @@ function getActualKey(obj: any, ...keys: string[]): string | null {
   return null
 }
 
+// ── Función para obtener saludo según hora ──────────────────────────────────
+function obtenerSaludo(): string {
+  const horaPeru = Number(
+    new Intl.DateTimeFormat('es-PE', {
+      timeZone: 'America/Lima',
+      hour: '2-digit',
+      hour12: false,
+    }).format(new Date())
+  )
+
+  if (horaPeru >= 5 && horaPeru < 12) {
+    return 'Buenos días,'
+  } else if (horaPeru >= 12 && horaPeru < 19) {
+    return 'Buenas tardes,'
+  } else {
+    return 'Buenas noches,'
+  }
+}
+
 // ── Correo Levantamiento de Hipoteca ─────────────────────────────────────────
 function abrirCorreoLevantamientoHipoteca(
   nombre: string,
@@ -103,30 +122,13 @@ function abrirCorreoLevantamientoHipoteca(
     return
   }
 
-  // Hora actual en Perú
-  const horaPeru = Number(
-    new Intl.DateTimeFormat('es-PE', {
-      timeZone: 'America/Lima',
-      hour: '2-digit',
-      hour12: false,
-    }).format(new Date())
-  )
-
-  let saludo = 'Buenos días,'
-
-  if (horaPeru >= 12 && horaPeru < 19) {
-    saludo = 'Buenas tardes,'
-  } else if (horaPeru >= 19 || horaPeru < 5) {
-    saludo = 'Buenas noches,'
-  }
-
+  const saludo = obtenerSaludo()
   const nombreCliente = nombre.trim()
   const dniCliente = dni.trim()
 
   const asunto =
     `LEVANTAMIENTO DE HIPOTECA / ${nombreCliente} / DNI (${dniCliente})`
 
-  // Cuerpo del correo en texto plano
   const cuerpo = `Estimado/a ${nombreCliente}:
 
 ${saludo}
@@ -149,15 +151,87 @@ Saludos cordiales,`
 
   const cc = 'solicitudescarteradirecta@mivivienda.com.pe'
 
-  // Construir el mailto completo con texto plano
   const mailtoUri = `mailto:${destinatario}?cc=${cc}&subject=${encodeURIComponent(asunto)}&body=${encodeURIComponent(cuerpo)}`
 
-  // Construir la URL de Outlook Web
   const outlookUrl = `https://outlook.office.com/mail/deeplink/compose` +
     `?mailtouri=${encodeURIComponent(mailtoUri)}` +
     `&ispopout=1`
 
-  // Abrir en nueva ventana
+  window.open(outlookUrl, '_blank', 'noopener,noreferrer')
+}
+
+// ── Correo Constancia de No Adeudo ───────────────────────────────────────────
+function abrirCorreoConstanciaNoAdeudo(
+  nombre: string,
+  dni: string,
+  email: string
+) {
+  const destinatario = email.trim()
+
+  if (!destinatario || destinatario === '---') {
+    alert('Este cliente no tiene un correo electrónico registrado.')
+    return
+  }
+
+  const saludo = obtenerSaludo()
+  const nombreCliente = nombre.trim()
+  const dniCliente = dni.trim()
+
+  const asunto =
+    `CONSTANCIA DE NO ADEUDO / ${nombreCliente} / DNI (${dniCliente})`
+
+  const cuerpo = `Estimado/a ${nombreCliente}:
+
+${saludo}
+
+Se remite Constancia de No Adeudo.
+Quedamos atentos a cualquier duda o comentario.
+
+Gracias.
+
+Nota: La solicitud de levantamiento de hipoteca se encuentra en gestión, apenas se cuente con la documentación nos contactaremos por este medio.
+
+Saludos,`
+
+  const cc = 'solicitudescarteradirecta@mivivienda.com.pe'
+
+  const mailtoUri = `mailto:${destinatario}?cc=${cc}&subject=${encodeURIComponent(asunto)}&body=${encodeURIComponent(cuerpo)}`
+
+  const outlookUrl = `https://outlook.office.com/mail/deeplink/compose` +
+    `?mailtouri=${encodeURIComponent(mailtoUri)}` +
+    `&ispopout=1`
+
+  window.open(outlookUrl, '_blank', 'noopener,noreferrer')
+}
+
+// ── Correo Consulta EECC ─────────────────────────────────────────────────────
+function abrirCorreoConsultaEECC(
+  nombre: string,
+  dni: string
+) {
+  const saludo = obtenerSaludo()
+  const nombreCliente = nombre.trim()
+  const dniCliente = dni.trim()
+
+  const destinatario = 'mfabian@efectibank.pe'
+  const asunto = `Consulta de deuda - ${nombreCliente} - DNI (${dniCliente})`
+
+  const cuerpo = `${saludo} Mayra:
+
+Por favor, solicitamos de su apoyo con la remisión del estado de cuenta actualizado, así como de la liquidación parcial y total del cliente ${nombreCliente}, identificado/a con DNI N.º ${dniCliente}.
+
+Quedamos atentos a su pronta atención y apoyo.
+
+Cordialmente,`
+
+  const cc = 'solicitudescarteradirecta@mivivienda.com.pe'
+
+  const mailtoUri = `mailto:${destinatario}?cc=${cc}&subject=${encodeURIComponent(asunto)}&body=${encodeURIComponent(cuerpo)}`
+
+  const outlookUrl = `https://outlook.office.com/mail/deeplink/compose` +
+    `?mailtouri=${encodeURIComponent(mailtoUri)}` +
+    `&ispopout=1`
+
   window.open(outlookUrl, '_blank', 'noopener,noreferrer')
 }
 
@@ -2007,8 +2081,45 @@ function ClientModal({
             </div>
           </div>
 
-          {/* 2. Información del Crédito */}
-          <Section title="2. Información del Crédito" accent={C.s2}>
+          {/* 2. Información del Crédito con botón Consultar EECC */}
+          <Section
+            title="2. Información del Crédito"
+            accent={C.s2}
+            action={
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+
+                  if (!canEdit) {
+                    onRequestUnlock()
+                    return
+                  }
+
+                  abrirCorreoConsultaEECC(nombre, dni)
+                }}
+                title={canEdit ? 'Consultar Estado de Cuenta' : 'Necesitas desbloquear para enviar correo'}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  background: canEdit ? C.s2 : C.textSoft,
+                  border: 'none',
+                  borderRadius: '6px',
+                  color: '#fff',
+                  fontFamily: 'Outfit, sans-serif',
+                  fontWeight: 600,
+                  fontSize: '10px',
+                  padding: '6px 10px',
+                  cursor: canEdit ? 'pointer' : 'not-allowed',
+                  whiteSpace: 'nowrap',
+                  opacity: canEdit ? 1 : 0.7,
+                }}
+              >
+                <IconMail size={14} color="#fff" />
+                Consultar EECC
+              </button>
+            }
+          >
             <Grid cols={3}>
               <Field label="N° Préstamo" value={prestamo} isEdit={isEdit} singleLine onChange={value => updateField(value, 'N° PRESTAMO', 'N° PRESTAMO ', 'PRESTAMO', 'n_prestamo', 'prestamo')} />
               <Field label="IFI" value={getValue(editData, 'IFI', 'ifi')} isEdit={isEdit} singleLine onChange={value => updateField(value, 'IFI', 'ifi')} />
@@ -2019,8 +2130,45 @@ function ClientModal({
             </Grid>
           </Section>
 
-          {/* 3. Constancia de No Adeudo */}
-          <Section title="3. Constancia de No Adeudo" accent={C.s3}>
+          {/* 3. Constancia de No Adeudo con botón Entregar CNA */}
+          <Section
+            title="3. Constancia de No Adeudo"
+            accent={C.s3}
+            action={
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+
+                  if (!canEdit) {
+                    onRequestUnlock()
+                    return
+                  }
+
+                  abrirCorreoConstanciaNoAdeudo(nombre, dni, emailCliente)
+                }}
+                title={canEdit ? 'Enviar Constancia de No Adeudo' : 'Necesitas desbloquear para enviar correo'}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  background: canEdit ? C.s3 : C.textSoft,
+                  border: 'none',
+                  borderRadius: '6px',
+                  color: '#fff',
+                  fontFamily: 'Outfit, sans-serif',
+                  fontWeight: 600,
+                  fontSize: '10px',
+                  padding: '6px 10px',
+                  cursor: canEdit ? 'pointer' : 'not-allowed',
+                  whiteSpace: 'nowrap',
+                  opacity: canEdit ? 1 : 0.7,
+                }}
+              >
+                <IconMail size={14} color="#fff" />
+                Entregar CNA
+              </button>
+            }
+          >
             <Grid cols={3}>
               <Field label="Constancia de No Adeudo" value={getValue(editData, 'CONSTANCIA DE NO ADEUDO', 'CNA', 'cna')} isEdit={isEdit} singleLine onChange={value => updateField(value, 'CONSTANCIA DE NO ADEUDO', 'CNA', 'cna')} />
               <Field label="F. Entrega CNA" value={getValue(editData, 'F. ENTREGA CNA', 'FECHA_CNA', 'f_entrega_cna')} isEdit={isEdit} singleLine onChange={value => updateField(value, 'F. ENTREGA CNA', 'FECHA_CNA', 'f_entrega_cna')} />
