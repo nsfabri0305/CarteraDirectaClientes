@@ -126,23 +126,39 @@ function abrirCorreoLevantamientoHipoteca(
   const asunto =
     `LEVANTAMIENTO DE HIPOTECA / ${nombreCliente} / DNI (${dniCliente})`
 
-  // Cuerpo en texto plano con saltos de línea para Outlook
-  const cuerpo = `Estimado/a ${nombreCliente}:\n\n${saludo}\n\nEl motivo del presente es para informarle que ya se cuenta con su minuta de levantamiento de hipoteca. Por ello, solicitamos su apoyo para remitirnos la dirección exacta de su domicilio según los siguientes criterios:\n\n- Dirección\n- Distrito\n- Provincia\n- Departamento\n- Referencia\n- Número de teléfono\n\nCon esta información, procederemos a enviar su minuta a través del Courier.\nAdemás, si prefiere recoger el documento en nuestras oficinas (ubicadas en Lima - San Isidro), le pedimos que responda a este correo indicando su preferencia para coordinar el proceso de entrega.\n\nQuedamos atentos a su respuesta lo antes posible.\n\nSaludos cordiales,`
+  // Cuerpo HTML con Aptos 11pt
+  const cuerpoHTML = `<div style="font-family: 'Aptos', 'Aptos Display', sans-serif; font-size: 11pt; line-height: 1.5;">
+<p style="margin: 0 0 10px 0;">Estimado/a ${nombreCliente}:</p>
+
+<p style="margin: 0 0 10px 0;">${saludo}</p>
+
+<p style="margin: 0 0 10px 0;">El motivo del presente es para informarle que ya se cuenta con su minuta de levantamiento de hipoteca. Por ello, solicitamos su apoyo para remitirnos la dirección exacta de su domicilio según los siguientes criterios:</p>
+
+<ul style="margin: 0 0 10px 20px; padding: 0;">
+<li style="margin: 0 0 5px 0;">Dirección</li>
+<li style="margin: 0 0 5px 0;">Distrito</li>
+<li style="margin: 0 0 5px 0;">Provincia</li>
+<li style="margin: 0 0 5px 0;">Departamento</li>
+<li style="margin: 0 0 5px 0;">Referencia</li>
+<li style="margin: 0 0 5px 0;">Número de teléfono</li>
+</ul>
+
+<p style="margin: 0 0 10px 0;">Con esta información, procederemos a enviar su minuta a través del Courier.<br>
+Además, si prefiere recoger el documento en nuestras oficinas (ubicadas en Lima - San Isidro), le pedimos que responda a este correo indicando su preferencia para coordinar el proceso de entrega.</p>
+
+<p style="margin: 0 0 10px 0;">Quedamos atentos a su respuesta lo antes posible.</p>
+
+<p style="margin: 0;">Saludos cordiales,</p>
+</div>`
 
   const cc = 'solicitudescarteradirecta@mivivienda.com.pe'
 
-  // Construir el mailto completo con texto plano
-  const mailtoUri = `mailto:${destinatario}?cc=${cc}&subject=${encodeURIComponent(asunto)}&body=${encodeURIComponent(cuerpo)}`
+  // Usar mailto: directo para evitar la firma automática de Outlook Web
+  // Esto abrirá el cliente de correo predeterminado del sistema operativo
+  const mailtoUri = `mailto:${destinatario}?cc=${cc}&subject=${encodeURIComponent(asunto)}&body=${encodeURIComponent(cuerpoHTML.replace(/<[^>]*>/g, ''))}`
 
-  // Construir la URL de Outlook Web
-  // Usamos mailtouri con el mailto completo y agregamos parámetros para evitar firma
-  const outlookUrl = `https://outlook.office.com/mail/deeplink/compose` +
-    `?mailtouri=${encodeURIComponent(mailtoUri)}` +
-    `&ispopout=1` +
-    `&path=/mail/action/compose`
-
-  // Abrir en nueva ventana
-  window.open(outlookUrl, '_blank', 'noopener,noreferrer')
+  // Abrir en la misma ventana
+  window.location.href = mailtoUri
 }
 
 // Parsea y formatea el saldo para detectar si es 0 o dinero mayor a 0
