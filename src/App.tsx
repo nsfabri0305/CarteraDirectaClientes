@@ -1538,7 +1538,7 @@ type SeguimientoRow = {
   created_at?: string
 }
 
-const seguimientoGridCols = '112px minmax(200px,2fr) 120px 100px 40px 32px'
+const seguimientoGridCols = '112px minmax(200px,2fr) 120px 100px 60px 32px'
 
 function SeguimientoTableHead({ showActions }: { showActions: boolean }) {
   const headers = ['Fecha Correo', 'Correo', 'Estado', 'Fecha Resp.', 'Respuesta', showActions ? '' : '']
@@ -1734,7 +1734,8 @@ function SeguimientoRowView({
       </div>
 
       {showLinkModal === 'correo' && (
-        <LinkModal          title="Correo del Cliente"
+        <LinkModal
+          title="Correo del Cliente"
           url={row.correo_archivo_url}
           asunto={row.correo_archivo_nombre}
           onSave={(url, asunto) => onChange(row.id, { 
