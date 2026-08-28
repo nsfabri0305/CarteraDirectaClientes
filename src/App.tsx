@@ -1368,7 +1368,75 @@ function Grid({ cols = 3, children }: { cols?: number; children: React.ReactNode
   )
 }
 
-// ── Modal para gestionar link y asunto ───────────────────────────────────────
+// ── Modal simplificado sin asunto (para respuesta) ─────────────────────────
+function LinkModalSimple({ 
+  title, 
+  url, 
+  onSave, 
+  onClose 
+}: { 
+  title: string; 
+  url: string | null; 
+  onSave: (url: string) => void; 
+  onClose: () => void 
+}) {
+  const [draftUrl, setDraftUrl] = useState(url || '')
+
+  return (
+    <>
+      <div
+        onClick={onClose}
+        style={{ position: 'fixed', inset: 0, background: 'rgba(13,43,94,0.45)', zIndex: 300, backdropFilter: 'blur(3px)' }}
+      />
+
+      <div
+        style={{
+          position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', zIndex: 301,
+          width: 'min(400px, 90vw)', background: C.bg, border: `1px solid ${C.border}`,
+          borderRadius: '14px', boxShadow: '0 20px 60px rgba(13,43,94,0.22)', padding: '22px',
+          boxSizing: 'border-box',
+        }}
+      >
+        <div style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: '15px', color: C.navy, marginBottom: '4px' }}>
+          {title}
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '14px' }}>
+          <div>
+            <div style={{ fontFamily: 'Inter, sans-serif', fontSize: '12px', color: C.textSoft, marginBottom: '6px' }}>
+              Link del correo:
+            </div>
+            <input
+              type="text"
+              value={draftUrl}
+              onChange={e => setDraftUrl(e.target.value)}
+              placeholder="https://outlook.office.com/..."
+              style={{
+                width: '100%', boxSizing: 'border-box', padding: '9px 12px',
+                background: C.white, border: `1px solid ${C.celeste}`,
+                borderRadius: '6px', color: C.text, fontFamily: 'Inter, sans-serif', fontSize: '13px', outline: 'none',
+              }}
+            />
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '18px' }}>
+          <Btn color={C.textMid} border={C.border} bg={C.white} onClick={onClose}>Cancelar</Btn>
+          <Btn 
+            color="#fff" 
+            border={C.blue1} 
+            bg={C.blue1} 
+            onClick={() => { onSave(draftUrl.trim()); onClose(); }}
+          >
+            Guardar
+          </Btn>
+        </div>
+      </div>
+    </>
+  )
+}
+
+// ── Modal con asunto (para correo) ─────────────────────────────────────────
 function LinkModal({ 
   title, 
   url, 
@@ -1519,7 +1587,7 @@ function AttachmentDisplay({
   showAsunto?: boolean
 }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0, width: '100%' }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', minWidth: 0, width: '100%', overflow: 'hidden' }}>
       <button
         onClick={onClick}
         disabled={disabled || !url}
@@ -1528,13 +1596,14 @@ function AttachmentDisplay({
           background: 'none', border: 'none', padding: 0, margin: 0,
           cursor: disabled || !url ? 'default' : 'pointer',
           opacity: disabled ? 0.35 : 1,
-          display: 'flex', alignItems: 'center', justifyContent: 'flex-start', flexShrink: 0,
-          gap: '6px',
+          display: 'flex', alignItems: 'center', justifyContent: 'flex-start',
+          gap: '4px',
           minWidth: 0,
           flex: 1,
+          overflow: 'hidden',
         }}
       >
-        <IconMail size={16} color={url ? color : C.textSoft} />
+        <IconMail size={15} color={url ? color : C.textSoft} style={{ flexShrink: 0 }} />
         
         {showAsunto && asunto && (
           <span style={{
@@ -1544,8 +1613,8 @@ function AttachmentDisplay({
             whiteSpace: 'nowrap',
             overflow: 'hidden',
             textOverflow: 'ellipsis',
-            flex: 1,
             minWidth: 0,
+            flex: 1,
           }}>
             {asunto}
           </span>
@@ -1555,7 +1624,7 @@ function AttachmentDisplay({
       {canEdit && (
         <button
           onClick={onEdit}
-          title="Editar link y asunto del correo"
+          title={showAsunto ? "Editar link y asunto del correo" : "Editar link"}
           style={{
             background: 'none', border: 'none', padding: '2px', margin: 0,
             cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -1564,7 +1633,7 @@ function AttachmentDisplay({
           onMouseEnter={e => { e.currentTarget.style.background = `${color}18` }}
           onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
         >
-          <IconEdit size={12} color={color} />
+          <IconEdit size={11} color={color} />
         </button>
       )}
     </div>
@@ -1678,13 +1747,11 @@ function SeguimientoRowView({
       )}
 
       {showLinkModal === 'respuesta' && (
-        <LinkModal
+        <LinkModalSimple
           title="Respuesta del Cliente"
           url={row.respuesta_archivo_url}
-          asunto={row.respuesta_archivo_nombre}
-          onSave={(url, asunto) => onChange(row.id, { 
-            respuesta_archivo_url: url || null,
-            respuesta_archivo_nombre: asunto || null
+          onSave={(url) => onChange(row.id, { 
+            respuesta_archivo_url: url || null
           })}
           onClose={() => setShowLinkModal(null)}
         />
