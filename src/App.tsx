@@ -1470,7 +1470,7 @@ type SeguimientoRow = {
   created_at?: string
 }
 
-const seguimientoGridCols = '112px minmax(120px,1.2fr) 138px 112px 52px 32px'
+const seguimientoGridCols = '112px minmax(180px,1.8fr) 138px 112px 80px 32px'
 
 function SeguimientoTableHead({ showActions }: { showActions: boolean }) {
   const headers = ['Fecha Correo', 'Correo', 'Estado', 'Fecha Resp.', 'Respuesta', showActions ? 'Acción' : '']
@@ -1507,6 +1507,7 @@ function AttachmentDisplay({
   canEdit,
   onClick,
   onEdit,
+  showAsunto = false,
 }: {
   url: string | null
   asunto: string | null
@@ -1515,9 +1516,10 @@ function AttachmentDisplay({
   canEdit: boolean
   onClick: () => void
   onEdit: () => void
+  showAsunto?: boolean
 }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0 }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0, width: '100%' }}>
       <button
         onClick={onClick}
         disabled={disabled || !url}
@@ -1526,13 +1528,15 @@ function AttachmentDisplay({
           background: 'none', border: 'none', padding: 0, margin: 0,
           cursor: disabled || !url ? 'default' : 'pointer',
           opacity: disabled ? 0.35 : 1,
-          display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+          display: 'flex', alignItems: 'center', justifyContent: 'flex-start', flexShrink: 0,
           gap: '6px',
+          minWidth: 0,
+          flex: 1,
         }}
       >
         <IconMail size={16} color={url ? color : C.textSoft} />
         
-        {asunto && (
+        {showAsunto && asunto && (
           <span style={{
             fontSize: '10px',
             color: C.textMid,
@@ -1540,7 +1544,8 @@ function AttachmentDisplay({
             whiteSpace: 'nowrap',
             overflow: 'hidden',
             textOverflow: 'ellipsis',
-            maxWidth: '80px',
+            flex: 1,
+            minWidth: 0,
           }}>
             {asunto}
           </span>
@@ -1554,7 +1559,7 @@ function AttachmentDisplay({
           style={{
             background: 'none', border: 'none', padding: '2px', margin: 0,
             cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-            borderRadius: '4px',
+            borderRadius: '4px', flexShrink: 0,
           }}
           onMouseEnter={e => { e.currentTarget.style.background = `${color}18` }}
           onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
@@ -1603,6 +1608,7 @@ function SeguimientoRowView({
         canEdit={canEdit}
         onClick={() => { if (row.correo_archivo_url) window.open(row.correo_archivo_url, '_blank', 'noopener,noreferrer') }}
         onEdit={() => setShowLinkModal('correo')}
+        showAsunto={true}
       />
 
       <select
@@ -1631,12 +1637,13 @@ function SeguimientoRowView({
 
       <AttachmentDisplay
         url={row.respuesta_archivo_url}
-        asunto={row.respuesta_archivo_nombre}
+        asunto={null}
         disabled={!isRespondido}
         color={C.s6}
         canEdit={canEdit}
         onClick={() => { if (row.respuesta_archivo_url && isRespondido) window.open(row.respuesta_archivo_url, '_blank', 'noopener,noreferrer') }}
         onEdit={() => setShowLinkModal('respuesta')}
+        showAsunto={false}
       />
 
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
